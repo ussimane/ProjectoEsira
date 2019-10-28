@@ -26,7 +26,12 @@
                 <textbox hflex="1" width="98%"  id="txProcurar"  ></textbox>
                 <textbox hflex="1" width="98%" id="txProcNrmec" ></textbox>
                 <intbox visible="false" hflex="1" tooltiptext="Ano de Ingresso" id="ibPAno" width="98%" ></intbox>
-                <combobox visible="false" hflex="1" tooltiptext="Curso" id="cbcurso" readonly="true" model="${$composer.listaCursoModel}" onCreate="self.setSelectedIndex(0)" width="98%" >
+                <combobox visible="false" hflex="1" tooltiptext="Curso" id="cbcurso" readonly="true" model="${$composer.listaCursoModel}" width="98%" >
+                    <attribute name="onCreate"><![CDATA[
+                            if((self.getModel()!=null) && self.getModel().getSize()>0){
+                               self.setSelectedIndex(0);
+                            }                           
+                        ]]></attribute> 
                     <comboitem label="${each}"/>
                 </combobox>
                 <radiogroup style="display: inline-block;"  id="ptaxa" visible="false" width="98%" >
@@ -158,7 +163,12 @@
                                                 <label value="Nome Completo *" />
                                             </div>
                                             <div sclass="description-area" height="100%">
-                                                <combobox id="combEstInsc" width="50%" value="pesquise um estudante..."  onAfterRender="self.setSelectedIndex(0)"   buttonVisible="true" autodrop="true" mold="rounded" >
+                                                <combobox id="combEstInsc" width="50%" value="pesquise um estudante..." buttonVisible="true" autodrop="true" mold="rounded" >
+                                                    <attribute name="onAfterRender"><![CDATA[
+                            if((self.getModel()!=null) && self.getModel().getSize()>0){
+                               self.setSelectedIndex(0);
+                            }                           
+                        ]]></attribute> 
                                                     <comboitem label="${each.descricao}"/>
                                                 </combobox>
                                             </div>

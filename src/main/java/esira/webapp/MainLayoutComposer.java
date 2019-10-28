@@ -18,6 +18,7 @@
  */
 package esira.webapp;
 
+import esira.domain.Faculdade;
 import esira.domain.Inscricao;
 import esira.domain.Inscricaodisciplina;
 import esira.domain.Users;
@@ -67,6 +68,7 @@ import org.zkoss.zkplus.spring.SpringUtil;
 import org.zkoss.zkplus.theme.Themes;
 import org.zkoss.zul.A;
 import org.zkoss.zul.Button;
+import org.zkoss.zul.Combobox;
 import org.zkoss.zul.Div;
 import org.zkoss.zul.Hbox;
 import org.zkoss.zul.Image;
@@ -94,7 +96,7 @@ public class MainLayoutComposer extends GenericForwardComposer implements
 
     private static final Log log = Log.lookup(MainLayoutComposer.class);
     private EventQueue eq;
-    Object o =SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+    Object o = SecurityContextHolder.getContext().getAuthentication().getAuthorities();
     GrantedAuthorityImpl[] lg = SecurityContextHolder.getContext().getAuthentication().getAuthorities().toArray(new GrantedAuthorityImpl[]{});
     @Autowired
     private HttpSession httpSession;
@@ -106,6 +108,7 @@ public class MainLayoutComposer extends GenericForwardComposer implements
     Map<String, Object> par = new HashMap<String, Object>();
     Div header;
     Button _selected;
+    Listitem _selectedItem;
     // static boolean b = false;
     A sair;
     Label user, bar, cnome;
@@ -119,6 +122,8 @@ public class MainLayoutComposer extends GenericForwardComposer implements
     Image mainpic;
     Users u = null;
     private String orientation;
+    private Combobox cfac;
+    Users us = null;
     //  LinkedCategory catego;
     //  LinkedItem dld;
 
@@ -180,7 +185,7 @@ public class MainLayoutComposer extends GenericForwardComposer implements
 
     public void onSelect$itemList(SelectEvent event) {
         Listitem item = itemList.getSelectedItem();
-
+        _selectedItem = item;
         if (item != null) {
             // sometimes the item is unloaded.
             if (!item.isLoaded()) {
@@ -251,7 +256,7 @@ public class MainLayoutComposer extends GenericForwardComposer implements
             while (items.hasNext()) {
                 li = items.next();
                 if (((Item) li.getValue()).getLabel().contains("Pedido")) {
-                    ValidacaopendentePK vpk = new ValidacaopendentePK(u.getIdFuncionario().getFaculdade().getIdFaculdade(), ((Item) li.getValue()).getId());
+                    ValidacaopendentePK vpk = new ValidacaopendentePK(us.getFaculdade().getIdFaculdade(), ((Item) li.getValue()).getId());
                     Validacaopendente vp = csimp.get(Validacaopendente.class, vpk);
                     if (vp != null) {
                         if (vp.getQtd() > 0) {
@@ -443,7 +448,7 @@ public class MainLayoutComposer extends GenericForwardComposer implements
     }
 
     public void onAbrirMenu() {
-     //   wmenu.setVisible(!wmenu.isVisible());
+        //   wmenu.setVisible(!wmenu.isVisible());
     }
 
 //    public void onClientInfo$borderlayout(ClientInfoEvent evt) {
@@ -458,7 +463,6 @@ public class MainLayoutComposer extends GenericForwardComposer implements
 //            }
 //        }
 //    }
-
     // Composer Implementation
     @Override
     public void doAfterCompose(Component comp) throws Exception {
@@ -471,20 +475,45 @@ public class MainLayoutComposer extends GenericForwardComposer implements
 //                }
         String usr = SecurityContextHolder.getContext().getAuthentication().getName();
         user.setValue(usr);
-        Utilizadorgeral ut=csimp.get(Utilizadorgeral.class,usr);
-      //  TenantIdResolver.setTenant(ut.getTenant());
-        System.out.println("novo tenant: "+ut.getTenant());
-        u = csimp.get(Users.class, usr);  
-        Users us = new Users(u.getUtilizador());
+        Utilizadorgeral ut = csimp.get(Utilizadorgeral.class, usr);
+        //  TenantIdResolver.setTenant(ut.getTenant());
+        System.out.println("novo tenant: " + ut.getTenant());
+        u = csimp.get(Users.class, usr);
+        us = new Users(u.getUtilizador());
 //        Login.setTenantId(u.getTenant());
 //       if(httpSession!=null) httpSession.setAttribute("tenant",u.getTenant());
-        
+
         ((Label) conta.getFellow("unome")).setValue(u.getNome());
         us.setUestudante(u.getUestudante());
         us.setTenant(u.getTenant());
-        us.setFaculdade(u.getFaculdade());
-        Sessions.getCurrent().setAttribute("user", us);
-   //     Messagebox.show(u.getFaculdade().getIdFaculdade()+"");
+//        us.setFaculdade(u.getFaculdade());
+//        Sessions.getCurrent().setAttribute("user", us);
+        if (u.getFaculdade() == null) {
+            List<Faculdade> lf = csimp.getAll(Faculdade.class);
+            Faculdade fac = lf.get(0);
+            if (lf != null && fac != null) {
+                fac.setLocalizacao(null);
+                if (Sessions.getCurrent().getAttribute("user") == null) {
+                    us.setFaculdade(fac);
+                    Sessions.getCurrent().setAttribute("user", us);
+//                    cfac.setModel(new ListModelList<Faculdade>(lf));
+//                    cfac.setVisible(true);
+//                    eq = EventQueues.lookup("valid" + fac.getIdFaculdade(), EventQueues.APPLICATION, true);
+//                    eq.subscribe(getEventoValid());
+                } else {
+                    us = (Users) Sessions.getCurrent().getAttribute("user");
+//                    cfac.setModel(new ListModelList<Faculdade>(lf));
+//                    cfac.setVisible(true);
+//                    eq = EventQueues.lookup("valid" + fac.getIdFaculdade(), EventQueues.APPLICATION, true);
+//                    eq.subscribe(getEventoValid());
+                }
+            }
+        } else {
+            us.setFaculdade(u.getFaculdade());
+            Sessions.getCurrent().setAttribute("user", us);
+        }
+
+        //     Messagebox.show(u.getFaculdade().getIdFaculdade()+"");
         Date datactual = new Date();
         Calendar calendar = new GregorianCalendar();
         calendar.setTime(datactual);
@@ -494,9 +523,8 @@ public class MainLayoutComposer extends GenericForwardComposer implements
     }
 
     public void onSetQueueValid() {
-        //Users u = csimpm.get(Users.class, usr.getUtilizador());
-        if (!u.getUestudante()) {
-            eq = EventQueues.lookup("valid" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        if (!us.getUestudante() && us.getFaculdade() != null) {
+            eq = EventQueues.lookup("valid" + us.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoValid());
         }
     }
@@ -511,17 +539,17 @@ public class MainLayoutComposer extends GenericForwardComposer implements
                 while (items.hasNext()) {
                     li = items.next();
                     if (li.getId().equals(vp.getValidacaopendentePK().getTipo())) {
-                     //   if (vp != null) {
-                            if (vp.getQtd() > 0) {
-                                Listcell lc = (Listcell) li.getChildren().get(0);
-                                lc.setLabel(((Item) li.getValue()).getLabel() + " (" + vp.getQtd() + ")");
-                                lc.setStyle("font-weight: bold");
-                            } else {
-                                Listcell lc = (Listcell) li.getChildren().get(0);
-                                lc.setLabel(((Item) li.getValue()).getLabel());
-                                lc.setStyle("font-weight: none");
-                            }
-                  //      }
+                        //   if (vp != null) {
+                        if (vp.getQtd() > 0) {
+                            Listcell lc = (Listcell) li.getChildren().get(0);
+                            lc.setLabel(((Item) li.getValue()).getLabel() + " (" + vp.getQtd() + ")");
+                            lc.setStyle("font-weight: bold");
+                        } else {
+                            Listcell lc = (Listcell) li.getChildren().get(0);
+                            lc.setLabel(((Item) li.getValue()).getLabel());
+                            lc.setStyle("font-weight: none");
+                        }
+                        //      }
                     }
                 }
             }

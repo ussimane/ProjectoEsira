@@ -31,7 +31,12 @@
                    
                         <intbox visible="false" hflex="1" tooltiptext="Ano de Ingresso" id="ibPAno" width="98%" ></intbox>
                      
-                        <combobox hflex="1" tooltiptext="Curso" id="cbcurso" readonly="true"  model="${$composer.listaCursoModel}" onCreate="self.setSelectedIndex(0)" width="98%" >
+                        <combobox hflex="1" tooltiptext="Curso" id="cbcurso" readonly="true"  model="${$composer.listaCursoModel}" width="98%" >
+                            <attribute name="onCreate"><![CDATA[
+                            if((self.getModel()!=null) && self.getModel().getSize()>0){
+                               self.setSelectedIndex(0);
+                            }                           
+                        ]]></attribute> 
                             <comboitem label="${each}"/>
                         </combobox> 
                     </auxheader>
@@ -134,7 +139,13 @@
                                                 <label value="Nome Completo *" />
                                             </div>
                                             <div sclass="description-area" height="100%">
-                                                <combobox id="combEstInscd" width="50%" value="pesquise um estudante..." onAfterRender="self.setSelectedIndex(0)" buttonVisible="true" autodrop="true" mold="rounded"/>
+                                                <combobox id="combEstInscd" width="50%" value="pesquise um estudante..." buttonVisible="true" autodrop="true" mold="rounded">
+                                                    <attribute name="onAfterRender"><![CDATA[
+                            if((self.getModel()!=null) && self.getModel().getSize()>0){
+                               self.setSelectedIndex(0);
+                            }                           
+                        ]]></attribute> 
+                                                </combobox>
                                             </div>
                                         </hlayout>
                                     </row>

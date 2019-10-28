@@ -50,7 +50,10 @@
                         <textbox hflex="1" width="98%"  id="txProcurar"  ></textbox>
                         <textbox hflex="1" width="98%" id="txProcNrmec" ></textbox>
                         <intbox hflex="1" visible="false" width="98%" tooltiptext="Ano Lectivo" id="ibProcAno" />
-                        <combobox id="cbcurso"  hflex="1" width="98%" readonly="true"  onAfterRender="self.setSelectedIndex(0)" model="${$composer.listaCursoModel}">
+                        <combobox id="cbfaculdade" forward="onSelect=onSelectcbfaculdade" visible="false"  hflex="1" width="98%" readonly="true" model="${$composer.listaFacModel}">
+                            <comboitem label="${each}"/>
+                        </combobox>
+                        <combobox id="cbcurso"  hflex="1" width="98%" readonly="true"  forward="onAfterRender=onSIndexCbcurso" model="${$composer.listaCursoModel}">
                             <comboitem label="${each}"/>
                         </combobox>
                         <button style="padding: 0;" tooltiptext="Filtrar" image="/icon/opcao.png" popup="popup, type=toggle, position=after_start" />

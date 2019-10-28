@@ -9,6 +9,7 @@ import ExcelExport.BeanToExcel;
 import esira.domain.Curso;
 import esira.domain.Disciplina;
 import esira.domain.Estudante;
+import esira.domain.Faculdade;
 import esira.domain.Funcionario;
 import esira.domain.Inscricao;
 import esira.domain.Inscricaodisciplina;
@@ -116,7 +117,7 @@ public class InscricaoDiscController extends GenericForwardComposer {
         Calendar cal = new GregorianCalendar();
         cal.setTime(dano);
         anoi.setValue(cal.get(Calendar.YEAR));
-        if (cbcurso.getModel() != null) {
+        if (cbcurso.getModel() != null&&cbcurso.getModel().getSize()>0) {
             Curso c = (Curso) cbcurso.getModel().getElementAt(0);
             par.clear();
             par.put("c", c);
@@ -137,9 +138,10 @@ public class InscricaoDiscController extends GenericForwardComposer {
 //        return new ListModelList<Disciplina>(((Curso)cbcurso.getSelectedItem().getValue()).getDisciplinaList());
 //    }
     public ListModel<Curso> getCursoModel() {
-        Users u = csimp.get(Users.class, usr.getUtilizador());
+       // Users u = csimp.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimp.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        par.put("fac", f);
         List<Curso> lc = csimp.findByJPQuery("from Curso c where c.faculdade = :fac", par);
         return new ListModelList<Curso>(lc);
     }

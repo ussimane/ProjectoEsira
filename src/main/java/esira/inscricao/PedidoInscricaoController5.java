@@ -15,6 +15,7 @@ import esira.domain.Curso;
 import esira.domain.Disciplina;
 import esira.domain.Disciplinaanulada;
 import esira.domain.Estudante;
+import esira.domain.Faculdade;
 import esira.domain.Funcionario;
 import esira.domain.Grupo;
 import esira.domain.Inscricao;
@@ -310,6 +311,7 @@ public class PedidoInscricaoController5 extends GenericForwardComposer {
                             case Messagebox.YES:
                                 Inscricao i = null;
                                 Users u = csimpm.get(Users.class, usr.getUtilizador());
+                                Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
                                 Transaction t = csimpm.getTransacao();
                                 try {
                                     t.begin();
@@ -467,7 +469,7 @@ public class PedidoInscricaoController5 extends GenericForwardComposer {
                                     } else {
                                         tipopedido = "g7";
                                     }
-                                    ValidacaopendentePK vpk = new ValidacaopendentePK(u.getFaculdade().getIdFaculdade(), tipopedido);
+                                    ValidacaopendentePK vpk = new ValidacaopendentePK(f.getIdFaculdade(), tipopedido);
                                     Validacaopendente vp = csimpm.getLocked(Validacaopendente.class, vpk);
                                     if (vp != null) {
                                         if ((vp.getQtd() - 1) < 0) {
@@ -479,14 +481,14 @@ public class PedidoInscricaoController5 extends GenericForwardComposer {
                                     } else {
                                         vp = new Validacaopendente();
                                         vp.setValidacaopendentePK(vpk);
-                                        vp.setFaculdade(u.getFaculdade());
+                                        vp.setFaculdade(f);
                                         vp.setQtd(0);
                                         csimpm.Saves(vp);
                                     }
-                                    eq = EventQueues.lookup("valid" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                    eq = EventQueues.lookup("valid" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onValidIns", null, vp));
                                 }//
-                                eq = EventQueues.lookup("rinscD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                eq = EventQueues.lookup("rinscD" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onRinscD", null, i));
                                 eq = EventQueues.lookup("rinscD" + i.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onRinscEstud", null, i));
@@ -590,6 +592,7 @@ public class PedidoInscricaoController5 extends GenericForwardComposer {
                                 Long idi = ((Intbox) ((Window) winAddMotivo.getParent()).getFellow("ibidInscd")).getValue().longValue();
                                 Inscricao i = null;
                                 Users u = csimpm.get(Users.class, usr.getUtilizador());
+                                Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
                                 Transaction t = csimpm.getTransacao();
                                 try {
                                     t.begin();
@@ -625,7 +628,7 @@ public class PedidoInscricaoController5 extends GenericForwardComposer {
                                     n.setMsg(txMotivoR.getText());
                                     n.setIdFuncionario(i.getFuncionario());
                                     csimpm.Saves(n);
-                                    eq = EventQueues.lookup("rinscRD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                    eq = EventQueues.lookup("rinscRD" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onPedidoMatD", null, i));
                                     eq = EventQueues.lookup("rinscRD" + i.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onPedidoMatD", null, i));
@@ -680,7 +683,7 @@ public class PedidoInscricaoController5 extends GenericForwardComposer {
                                     } else {
                                         tipopedido = "g7";
                                     }
-                                    ValidacaopendentePK vpk = new ValidacaopendentePK(u.getFaculdade().getIdFaculdade(), tipopedido);
+                                    ValidacaopendentePK vpk = new ValidacaopendentePK(f.getIdFaculdade(), tipopedido);
                                     Validacaopendente vp = csimpm.getLocked(Validacaopendente.class, vpk);
                                     if (vp != null) {
                                         if ((vp.getQtd() - 1) < 0) {
@@ -692,11 +695,11 @@ public class PedidoInscricaoController5 extends GenericForwardComposer {
                                     } else {
                                         vp = new Validacaopendente();
                                         vp.setValidacaopendentePK(vpk);
-                                        vp.setFaculdade(u.getFaculdade());
+                                        vp.setFaculdade(f);
                                         vp.setQtd(0);
                                         csimpm.Saves(vp);
                                     }
-                                    eq = EventQueues.lookup("valid" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                    eq = EventQueues.lookup("valid" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onPedidoMatD", null, vp));
                                 }//
 
@@ -721,9 +724,10 @@ public class PedidoInscricaoController5 extends GenericForwardComposer {
 
     //Pesquisar estudante
     public ListModel<Curso> getListaCursoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
         return listaCursoModel = new ListModelList<Curso>(lc);
     }

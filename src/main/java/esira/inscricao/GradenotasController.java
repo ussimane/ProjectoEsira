@@ -10,6 +10,7 @@ import entidade.DisciplinaEstudante;
 import esira.domain.Curso;
 import esira.domain.Disciplina;
 import esira.domain.Estudante;
+import esira.domain.Faculdade;
 import esira.domain.Inscricao;
 import esira.domain.Inscricaodisciplina;
 import esira.domain.Matriculaanulada;
@@ -109,11 +110,12 @@ public class GradenotasController extends GenericForwardComposer {
             if (!usr.getUestudante()) {
                 // Messagebox.show(ibProcAno.getValue()+" "+((Curso)cbcurso.getSelectedItem().getValue()).getDescricao());
                 // lbgnotas.setModel(getListInscricaoModel());
+                if(cbcurso.getModel()!=null&&cbcurso.getModel().getSize()>0){
                 condpar.clear();
                 pos = 0;
                 condcurso = " and e.cursocurrente = :curso ";
                 condpar.put("curso", (Curso) cbcurso.getModel().getElementAt(0));
-                setLB(0, 20);
+                setLB(0, 20);}
             } else {
                 if (!winGNotas.inModal() && usr.getUtilizador() != null) {
                     getListInscricaoModel2();
@@ -127,9 +129,10 @@ public class GradenotasController extends GenericForwardComposer {
     }
 
     public ListModel<Curso> getListaCursoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+       // Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
         return new ListModelList<Curso>(lc);
     }

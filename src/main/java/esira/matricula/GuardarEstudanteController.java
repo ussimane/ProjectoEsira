@@ -1750,6 +1750,7 @@ public class GuardarEstudanteController extends GenericForwardComposer {
                                 par.put("ide", mpk);
                                 final Matricula mat = csimpm.findEntByJPQuery("from Matricula m where m.matriculaPK=:ide", par);
                                 final Users u = csimpm.get(Users.class, usr.getUtilizador());
+                                Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
 //                                if (tipov.getValue() == 2) {
                                 mat.setFuncionario(u.getIdFuncionario());
 //                                } else {
@@ -1801,7 +1802,7 @@ public class GuardarEstudanteController extends GenericForwardComposer {
                                     csimpm.load(Listaadmissao.class, la.getIdaluno());
                                     la.setMatriculado(true);
                                     csimpm.update(la);
-                                    eq = EventQueues.lookup("uladm" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                    eq = EventQueues.lookup("uladm" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onPedidoMat", null, la));
                                 }
                                 Clients.showNotification(" Matricula validada com Sucesso", null, null, null, 2000);
@@ -1815,7 +1816,7 @@ public class GuardarEstudanteController extends GenericForwardComposer {
                                     } else {
                                         tipopedido = "f9";
                                     }
-                                    ValidacaopendentePK vpk = new ValidacaopendentePK(u.getFaculdade().getIdFaculdade(), tipopedido);
+                                    ValidacaopendentePK vpk = new ValidacaopendentePK(f.getIdFaculdade(), tipopedido);
                                     Validacaopendente vp = csimpm.getLocked(Validacaopendente.class, vpk);
                                     if (vp != null) {
                                         if ((vp.getQtd() - 1) < 0) {
@@ -1827,14 +1828,14 @@ public class GuardarEstudanteController extends GenericForwardComposer {
                                     } else {
                                         vp = new Validacaopendente();
                                         vp.setValidacaopendentePK(vpk);
-                                        vp.setFaculdade(u.getFaculdade());
+                                        vp.setFaculdade(f);
                                         vp.setQtd(0);
                                         csimpm.Save(vp);
                                     }
-                                    eq = EventQueues.lookup("valid" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                    eq = EventQueues.lookup("valid" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onPedidoMatD", null, vp));
                                 }//
-                                eq = EventQueues.lookup("rmatD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                eq = EventQueues.lookup("rmatD" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMatD", null, mat));
                                 eq = EventQueues.lookup("rmatD" + mat.getEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMatD", null, mat));
@@ -1939,6 +1940,7 @@ public class GuardarEstudanteController extends GenericForwardComposer {
                                 par.clear();
                                 par.put("ide", mpk);
                                 final Users u = csimpm.get(Users.class, usr.getUtilizador());
+                                Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
                                 final Matricula mat = (Matricula) csimpm.findByJPQuery("from Matricula m where m.matriculaPK=:ide", par).get(0);
                                 if (tipov.getValue() == 2) {
                                     Notificacao n = new Notificacao(new Date());
@@ -1970,7 +1972,7 @@ public class GuardarEstudanteController extends GenericForwardComposer {
                                     } else {
                                         tipopedido = "f9";
                                     }
-                                    ValidacaopendentePK vpk = new ValidacaopendentePK(u.getFaculdade().getIdFaculdade(), tipopedido);
+                                    ValidacaopendentePK vpk = new ValidacaopendentePK(f.getIdFaculdade(), tipopedido);
                                     Validacaopendente vp = csimpm.getLocked(Validacaopendente.class, vpk);
                                     if (vp != null) {
                                         if ((vp.getQtd() - 1) < 0) {
@@ -1982,14 +1984,14 @@ public class GuardarEstudanteController extends GenericForwardComposer {
                                     } else {
                                         vp = new Validacaopendente();
                                         vp.setValidacaopendentePK(vpk);
-                                        vp.setFaculdade(u.getFaculdade());
+                                        vp.setFaculdade(f);
                                         vp.setQtd(0);
                                         csimpm.Save(vp);
                                     }
-                                    eq = EventQueues.lookup("valid" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                    eq = EventQueues.lookup("valid" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onPedidoMatD", null, vp));
                                 }//
-                                eq = EventQueues.lookup("rmatD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                eq = EventQueues.lookup("rmatD" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMatD", null, mat));
                                 eq = EventQueues.lookup("rmatD" + mat.getEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMatD", null, mat));

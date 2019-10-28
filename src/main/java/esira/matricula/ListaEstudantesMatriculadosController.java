@@ -17,6 +17,7 @@ import esira.domain.Enderecof;
 import esira.domain.Especial;
 import esira.domain.Estadocivil;
 import esira.domain.Estudante;
+import esira.domain.Faculdade;
 import esira.domain.Funcionario;
 import esira.domain.Ingressobolseiro;
 import esira.domain.Ingressoexameadmissao;
@@ -183,15 +184,15 @@ public class ListaEstudantesMatriculadosController extends GenericForwardCompose
     
 
     public void onSetQueueEstMat() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         if (!usr.getUestudante()) {
-            eq = EventQueues.lookup("mat" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+            eq = EventQueues.lookup("mat" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoMat());
-            eq = EventQueues.lookup("rmatD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+            eq = EventQueues.lookup("rmatD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoMat());
-            eq = EventQueues.lookup("rmatA" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+            eq = EventQueues.lookup("rmatA" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoAnul());
-            eq = EventQueues.lookup("anulaM" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+            eq = EventQueues.lookup("anulaM" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoAnul());
         }
 //        else {
@@ -279,17 +280,19 @@ public class ListaEstudantesMatriculadosController extends GenericForwardCompose
 //        return listEstudanteModel = new ListModelList<Matricula>(listaM);
 //    }
     public ListModel<Curso> getListaCursoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
         return listaCursoModel = new ListModelList<Curso>(lc);
     }
 
     public ListModel<Curso> getCursocModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
         return listaCursoModel = new ListModelList<Curso>(lc);
     }

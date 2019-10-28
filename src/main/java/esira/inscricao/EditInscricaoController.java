@@ -14,6 +14,7 @@ import esira.domain.Curso;
 import esira.domain.Disciplina;
 import esira.domain.Disciplinaanulada;
 import esira.domain.Estudante;
+import esira.domain.Faculdade;
 import esira.domain.Funcionario;
 import esira.domain.Grupo;
 import esira.domain.Inscricao;
@@ -154,9 +155,10 @@ public class EditInscricaoController extends GenericForwardComposer {
         if (cbDiscRel != null && cbDiscRel.getItems() != null) {
             cbDiscRel.setSelectedIndex(-1);
         }
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+       //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         condpar.clear();
-        condpar.put("fac", u.getFaculdade());
+        condpar.put("fac", f);
         // if(winInscricaoP.isVisible()==false&&winAddInscricao!=null&&winAddInscricao.getParent().getId().equals("winInscricaoP")){
         // addInsc();
         //}
@@ -164,10 +166,10 @@ public class EditInscricaoController extends GenericForwardComposer {
     }
 
     public void onSetQueue() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
-        eq = EventQueues.lookup("pinscD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+       // Users u = csimpm.get(Users.class, usr.getUtilizador());
+        eq = EventQueues.lookup("pinscD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEvento());
-        eq = EventQueues.lookup("rinscD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        eq = EventQueues.lookup("rinscD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEvento2());
     }
 
@@ -245,10 +247,11 @@ public class EditInscricaoController extends GenericForwardComposer {
         int ano = cal.get(Calendar.YEAR);
         par.clear();
         par.put("user", usr.getUtilizador());
-        Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+       // Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.clear();
         par.put("ano", ano);
-        par.put("fac", u.getFaculdade());
+        par.put("fac", f);
         List<Estudante> estu = csimpm.findByJPQuery("from Estudante e where e.cursocurrente.faculdade = :fac and e.idEstudante in (select m.estudante from Matricula m where "
                 + "extract(year from m.dataMatricula) = :ano and m.estudante not in (select ma.matriculaPK.idEstudante from Matriculaanulada ma where ma.matriculaPK.ano = :ano))", par);
         return new ListModelList<Estudante>(estu);
@@ -396,9 +399,10 @@ public class EditInscricaoController extends GenericForwardComposer {
         List<Inscricao> li = null;
         par.clear();
         par.put("user", usr.getUtilizador());
-        Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+        //Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        par.put("fac", f);
         li = csimpm.findByJPQuery("from Inscricao i where i.idEstudante.cursocurrente.faculdade = :fac and i.dataConfirmacao is null", par);
         return new ListModelList<Inscricao>(li);
     }
@@ -1003,6 +1007,7 @@ public class EditInscricaoController extends GenericForwardComposer {
                                         return;
                                     }
                                     Users u = csimpm.get(Users.class, usr.getUtilizador());
+                                    Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
                                     i.setFuncionario(u.getIdFuncionario());
                                     i.setDataConfirmacao(new Date());
                                     i.setEstado(false);
@@ -1020,7 +1025,7 @@ public class EditInscricaoController extends GenericForwardComposer {
                                                 i.getIdEstudante().getEmail(), "Inscrição Rejeitada!", "Prezado " + i.getIdEstudante().getNomeCompleto() + ""
                                                 + "\nA sua Inscricao foi rejeitada\n" + m.getMotivo() + "\n"
                                                 + "\n\n----------------------------------------\n\n\n"
-                                                + "Registo Acadêmico - UniLúrio-" + u.getFaculdade().getDesricao(),
+                                                + "Registo Acadêmico - UniLúrio-" + f.getDesricao(),
                                                 UserAutentic.getEmailP("senha"));
                                     } catch (EmailException uh) {
                                         Clients.showNotification("O Envio de e-mail Falhou!", "warning", null, null, 0, true);
@@ -1034,7 +1039,7 @@ public class EditInscricaoController extends GenericForwardComposer {
                                         } else {
                                             tipopedido = "g7";
                                         }
-                                        ValidacaopendentePK vpk = new ValidacaopendentePK(u.getFaculdade().getIdFaculdade(), tipopedido);
+                                        ValidacaopendentePK vpk = new ValidacaopendentePK(f.getIdFaculdade(), tipopedido);
                                         Validacaopendente vp = csimpm.getLocked(Validacaopendente.class, vpk);
                                         if (vp != null) {
                                             if ((vp.getQtd() - 1) < 0) {
@@ -1046,15 +1051,15 @@ public class EditInscricaoController extends GenericForwardComposer {
                                         } else {
                                             vp = new Validacaopendente();
                                             vp.setValidacaopendentePK(vpk);
-                                            vp.setFaculdade(u.getFaculdade());
+                                            vp.setFaculdade(f);
                                             vp.setQtd(0);
                                             csimpm.Saves(vp);
                                         }
-                                        eq = EventQueues.lookup("valid" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                        eq = EventQueues.lookup("valid" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                         eq.publish(new Event("onPedidoMatD", null, vp));
                                     }//
 //                                ((ListModelList) ((Listbox) winAddMotivoI.getParent().getParent().getFellow("lbinscricaop")).getModel()).remove(i);
-                                    eq = EventQueues.lookup("rinscD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                    eq = EventQueues.lookup("rinscD" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onPedidoMatD", null, i));
                                     eq = EventQueues.lookup("rinscD" + i.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onPedidoMatD", null, i));
@@ -1099,9 +1104,10 @@ public class EditInscricaoController extends GenericForwardComposer {
 
     //Pesquisar estudante
     public ListModel<Curso> getListaCursoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
         return listaCursoModel = new ListModelList<Curso>(lc);
     }

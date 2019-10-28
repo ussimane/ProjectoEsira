@@ -340,7 +340,7 @@
                         </grid>
                         <div align="center">
                             <hbox >
-                                <button autodisable="self" id="saveUser" label="Salvar" mold="trendy" height="20px" />
+                                <button autodisable="self" id="saveUser" forward="onSaveUser" label="Salvar" mold="trendy" height="20px" />
                                 <button autodisable="self" id="cancelUser" label="Cancelar" mold="trendy" height="20px" />
                             </hbox>
                         </div>

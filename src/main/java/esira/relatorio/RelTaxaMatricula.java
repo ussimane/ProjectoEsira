@@ -132,9 +132,10 @@ public class RelTaxaMatricula extends GenericForwardComposer {
         Calendar c = Calendar.getInstance();
         par.clear();
         par.put("user", usr.getUtilizador());
-        Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+       // Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade =:fac", par);
         par.put("curso", lc.get(0));
         listaM = csimpm.findByJPQuery("from Matricula m where m.curso.faculdade = :fac and m.curso=:curso and m.confirmacao is not null and m.estado is true and m.matriculaPK not in (select ma.matriculaPK from "

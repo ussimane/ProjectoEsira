@@ -34,6 +34,7 @@ public class CustomerFacadeREST {
         List<Estudante> estudantes = new ArrayList<Estudante>();
         Estudante e = new Estudante();
         e.setNomeCompleto("dsfsdf");
+        estudantes.add(e);
 		return estudantes;
 	}
     

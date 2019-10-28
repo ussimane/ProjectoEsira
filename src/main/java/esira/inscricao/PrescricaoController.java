@@ -9,6 +9,7 @@ import ExcelExport.BeanToExcel;
 import esira.domain.Curso;
 import esira.domain.Disciplina;
 import esira.domain.Estudante;
+import esira.domain.Faculdade;
 import esira.domain.Funcionario;
 import esira.domain.Inscricao;
 import esira.domain.Inscricaodisciplina;
@@ -123,8 +124,9 @@ public class PrescricaoController extends GenericForwardComposer {
             posc.setValue(0);
         }
         condc = " and p.inscricaodisciplina.inscricao.idEstudante.cursocurrente.faculdade =:c ";
-        Users u = csimp.get(Users.class, usr.getUtilizador());
-        parcond.put("c", u.getFaculdade());
+       // Users u = csimp.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimp.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        parcond.put("c", f);
         setLB(0, 10);
 
     }
@@ -136,8 +138,9 @@ public class PrescricaoController extends GenericForwardComposer {
 
     public ListModel<Curso> getCursoModel() {
         par.clear();
-        Users u = csimp.get(Users.class, usr.getUtilizador());
-        par.put("fac", u.getFaculdade());
+        //Users u = csimp.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimp.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Curso> lc = new ArrayList<Curso>();
         Curso c = new Curso();
         c.setDescricao("------- Curso -------");
@@ -187,11 +190,12 @@ public class PrescricaoController extends GenericForwardComposer {
             cbDiscP.setVisible(true);
         } else {
             condc = " and p.inscricaodisciplina.inscricao.idEstudante.cursocurrente.faculdade =:c ";
-            Users u = csimp.get(Users.class, usr.getUtilizador());
+            //Users u = csimp.get(Users.class, usr.getUtilizador());
+            Faculdade f = csimp.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
             if (parcond.containsKey("c")) {
-                parcond.replace("c", u.getFaculdade());
+                parcond.replace("c", f);
             } else {
-                parcond.put("c", u.getFaculdade());
+                parcond.put("c", f);
             }
             condd = "";
             parcond.remove("d");
@@ -533,9 +537,10 @@ public class PrescricaoController extends GenericForwardComposer {
             cbestudante.setModel(new ListModelList<Estudante>());
         }
         List<Estudante> li = null;
-        Users u = csimp.get(Users.class, usr.getUtilizador());
+        //Users u = csimp.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimp.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         // par.clear();
-        condpar.put("fac", u.getFaculdade());
+        condpar.put("fac", f);
         li = csimp.findByJPQueryFilter("from Estudante e where e.cursocurrente.faculdade = :fac " + condn + " order by e.nomeCompleto", condpar, i, j);
         final Iterator<Estudante> items = li.iterator();
         Estudante e;

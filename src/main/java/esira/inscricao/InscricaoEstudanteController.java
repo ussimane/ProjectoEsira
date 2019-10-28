@@ -161,13 +161,14 @@ public class InscricaoEstudanteController extends GenericForwardComposer {
 
     public ListModel<Estudante> getEstInscModel() {
         List<Estudante> estu = null;
-        par.put("user", usr.getUtilizador());
-        Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
-        if (u != null) {
-            par.clear();
-        }
+       // par.put("user", usr.getUtilizador());
+        //Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+//        if (u != null) {
+//            par.clear();
+//        }
         //   par.put("ano", ano);
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         estu = csimpm.findByJPQuery("from Estudante e where e.cursocurrente.faculdade = :fac", par);
         return new ListModelList<Estudante>(estu);
     }
@@ -233,9 +234,10 @@ public class InscricaoEstudanteController extends GenericForwardComposer {
 //        return new ListModelList<Disciplina>(disc);
 //    }
     public ListModel<Curso> getListCursoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac",f);
         List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
         return new ListModelList<Curso>(lc);
     }
@@ -363,9 +365,10 @@ public class InscricaoEstudanteController extends GenericForwardComposer {
             i.setEstado(true);
             i.setGrupo(gi);
             Users u = csimpm.get(Users.class, usr.getUtilizador());
+            Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
             i.setFuncionario(u.getIdFuncionario());
             i.setIdEstudante(e);
-            idf = u.getFaculdade().getIdFaculdade();
+            idf = f.getIdFaculdade();
             // i.setModoInscricao(new Short("6"));
             // if (co == 0) {
             i.setModoInscricao(new Short("9"));
@@ -436,8 +439,9 @@ public class InscricaoEstudanteController extends GenericForwardComposer {
         } else {
             vp = new Validacaopendente();
             vp.setValidacaopendentePK(vpk);
-            Users u = csimpm.get(Users.class, usr.getUtilizador());
-            vp.setFaculdade(u.getFaculdade());
+           // Users u = csimpm.get(Users.class, usr.getUtilizador());
+            Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+            vp.setFaculdade(f);
             vp.setQtd(1);
             csimpm.Save(vp);
         }
@@ -488,7 +492,8 @@ public class InscricaoEstudanteController extends GenericForwardComposer {
             gi.setDescricao(txMotDisc.getValue());
             csimpm.Saves(gi);
             Users u = csimpm.get(Users.class, usr.getUtilizador());
-            idf = u.getFaculdade().getIdFaculdade();
+            Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+            idf = f.getIdFaculdade();
             for (Listitem l : lbestu.getSelectedItems()) {
                 ca = Calendar.getInstance();
                 Inscricao i = new Inscricao();
@@ -603,8 +608,9 @@ public class InscricaoEstudanteController extends GenericForwardComposer {
         } else {
             vp = new Validacaopendente();
             vp.setValidacaopendentePK(vpk);
-            Users u = csimpm.get(Users.class, usr.getUtilizador());
-            vp.setFaculdade(u.getFaculdade());
+            //Users u = csimpm.get(Users.class, usr.getUtilizador());
+            Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+            vp.setFaculdade(f);
             vp.setQtd(1);
             csimpm.Save(vp);
         }
@@ -741,7 +747,8 @@ public class InscricaoEstudanteController extends GenericForwardComposer {
             int co = 0;
             Calendar ca;
             Users u = csimpm.get(Users.class, usr.getUtilizador());
-            idf = u.getFaculdade().getIdFaculdade();
+            Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+            idf = f.getIdFaculdade();
             final Iterator<Listitem> items2 = new ArrayList(lbdisceq.getSelectedItems()).listIterator();
             Disciplina d = null;
             Listitem li;
@@ -921,9 +928,10 @@ public class InscricaoEstudanteController extends GenericForwardComposer {
             combEstu.setModel(new ListModelList<Estudante>());
         }
         List<Estudante> li = null;
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         // par.clear();
-        condpar.put("fac", u.getFaculdade());
+        condpar.put("fac", f);
         li = csimpm.findByJPQueryFilter("from Estudante e where e.cursocurrente.faculdade = :fac " + condn + " order by e.nomeCompleto", condpar, i, j);
         final Iterator<Estudante> items = li.iterator();
         Estudante e;

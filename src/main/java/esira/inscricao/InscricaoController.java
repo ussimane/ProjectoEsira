@@ -105,9 +105,9 @@ import org.zkoss.zul.impl.InputElement;
  * @author Administrator
  */
 public class InscricaoController extends GenericForwardComposer {
-
+    
     private EventQueue eq;
-
+    
     @WireVariable
     private CRUDService csimpm = (CRUDService) SpringUtil.getBean("CRUDService");
     private Window winAddInscricao, winInscricao, winAddInscricaoDisc, winAnularI, winanularmot, win;
@@ -124,7 +124,7 @@ public class InscricaoController extends GenericForwardComposer {
     private Row rwTaxanM, rwTaxaeM, rwTaxamulta15, rwTaxamulta30;
     private Button addInsc, btnCancDisc, btnAnular, lbc, btnPInsc;
     Textbox txnrTalao, txx, tbimg4, txMotivo;
-    Combobox cbCursoRel, cbDiscRel;
+    Combobox cbCursoRel, cbDiscRel, cbfaculdade;
     List listaI;
     Datebox dinsc;
     private static Media mediaCPI;
@@ -132,7 +132,7 @@ public class InscricaoController extends GenericForwardComposer {
     private int sem = 0;
     private int n, novoNivel;
     private int pos;
-
+    
     private Intbox item, idest;
     Map<String, Object> par = new HashMap<String, Object>();
     Map<String, Object> ent = new HashMap<String, Object>();
@@ -154,7 +154,7 @@ public class InscricaoController extends GenericForwardComposer {
     private String pesq = null, condn = "";
     private Intbox posc;
     Map<String, Object> cbpar = new HashMap<String, Object>();
-
+    
     @Override
     public void doAfterCompose(Component comp) throws Exception {
         super.doAfterCompose(comp);
@@ -209,9 +209,20 @@ public class InscricaoController extends GenericForwardComposer {
                     if (!winInscricao.getParent().getId().equals("mDialogMatricula")) {
                         pos = 0;
                         condpar.clear();
-                        condcurso = " and e.cursocurrente = :curso ";
-                        condpar.put("curso", (Curso) cbcurso.getModel().getElementAt(0));
-                        setLB(0, 10);
+                        //Users u = csimpm.get(Users.class, usr.getUtilizador());
+                        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+                        if (f != null) {
+                            condcurso = " and e.cursocurrente = :curso ";
+                            ListModel lm = getListaCursoModel();
+                            if (lm != null && lm.getSize() > 0) {
+                                condpar.put("curso", (Curso) lm.getElementAt(0));
+                                setLB(0, 10);
+                            } else {
+                                lbinscricao.setModel(new ListModelList<>());
+                            }
+                        } else {
+                            cbfaculdade.setVisible(true);
+                        }
                     } else {
                         btnAnular.setVisible(false);
                         btnPInsc.setVisible(false);
@@ -228,22 +239,30 @@ public class InscricaoController extends GenericForwardComposer {
         // addInsc();
         //}
     }
-
+    
+    public void onSIndexCbcurso() {
+        if (cbcurso.getModel() != null && cbcurso.getModel().getSize() > 0) {
+            cbcurso.setSelectedIndex(0);
+        }
+    }
+    
     public void onSetQueueInsc() {
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         if (!usr.getUestudante()) {
-            Users u = csimpm.get(Users.class, usr.getUtilizador());
-            eq = EventQueues.lookup("insc" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
-            eq.subscribe(getEventoInsc());
+           // if (u.getFaculdade() != null) {
+                eq = EventQueues.lookup("insc" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                eq.subscribe(getEventoInsc());
 //            eq = EventQueues.lookup("pinscD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
 //            eq.subscribe(getEventoP());
-            eq = EventQueues.lookup("rinscD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
-            eq.subscribe(getEventoP());
-            eq = EventQueues.lookup("rinscRD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
-            eq.subscribe(getEventoRP());
-            eq = EventQueues.lookup("rinscA" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
-            eq.subscribe(getEventoIA());
-            eq = EventQueues.lookup("anula" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
-            eq.subscribe(getEventoAnul());
+                eq = EventQueues.lookup("rinscD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                eq.subscribe(getEventoP());
+                eq = EventQueues.lookup("rinscRD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                eq.subscribe(getEventoRP());
+                eq = EventQueues.lookup("rinscA" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                eq.subscribe(getEventoIA());
+                eq = EventQueues.lookup("anula" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                eq.subscribe(getEventoAnul());
+           // }
         } else if (usr.getUtilizador() != null) {
             Users u = csimpm.get(Users.class, usr.getUtilizador());
             eq = EventQueues.lookup("insc" + u.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
@@ -260,7 +279,7 @@ public class InscricaoController extends GenericForwardComposer {
             eq.subscribe(getEventoAnulE());
         }
     }
-
+    
     public EventListener getEventoInscE() {
         return new EventListener() {
             @Override
@@ -285,7 +304,7 @@ public class InscricaoController extends GenericForwardComposer {
             }
         };
     }
-
+    
     public EventListener getEventoInsc() { //problemas quando o estudante nao existe
         return new EventListener() {
             @Override
@@ -319,7 +338,7 @@ public class InscricaoController extends GenericForwardComposer {
             }
         };
     }
-
+    
     public EventListener getEventoPE() {
         return new EventListener() {
             @Override
@@ -345,7 +364,7 @@ public class InscricaoController extends GenericForwardComposer {
             }
         };
     }
-
+    
     public EventListener getEventoRPE() {
         return new EventListener() {
             @Override
@@ -362,7 +381,7 @@ public class InscricaoController extends GenericForwardComposer {
             }
         };
     }
-
+    
     public EventListener getEventoP() {
         return new EventListener() {
             @Override
@@ -395,7 +414,7 @@ public class InscricaoController extends GenericForwardComposer {
             }
         };
     }
-
+    
     public EventListener getEventoRP() {
         return new EventListener() {
             @Override
@@ -409,7 +428,7 @@ public class InscricaoController extends GenericForwardComposer {
             }
         };
     }
-
+    
     public EventListener getEventoIA() {
         return new EventListener() {
             @Override
@@ -443,7 +462,7 @@ public class InscricaoController extends GenericForwardComposer {
             }
         };
     }
-
+    
     public EventListener getEventoIAE() {
         return new EventListener() {
             @Override
@@ -460,7 +479,7 @@ public class InscricaoController extends GenericForwardComposer {
             }
         };
     }
-
+    
     public EventListener getEventoAnul() {
         return new EventListener() {
             @Override
@@ -484,7 +503,7 @@ public class InscricaoController extends GenericForwardComposer {
                                 ((ListModelList) lbinscricao.getModel()).set(index, id);
                             }
                         }
-
+                        
                     }
                 }
                 Users user = csimpm.get(Users.class, usr.getUtilizador());
@@ -504,11 +523,11 @@ public class InscricaoController extends GenericForwardComposer {
                 winanularmot.setTitle(title);
                 txx.setValue(user.getIdEstudante().getIdEstudante() + "");
             }
-
+            
         };
-
+        
     }
-
+    
     public EventListener getEventoAnulE() {
         return new EventListener() {
             @Override
@@ -573,13 +592,13 @@ public class InscricaoController extends GenericForwardComposer {
             }
         }
     }
-
+    
     public void onClose$winInscricao(Event evt) {
         if (((Window) winInscricao.getParent()).inModal()) {
             winInscricao.getParent().detach();
         }
     }
-
+    
     public ListModel<Estudante> getEstInscModel() {
         Date dano = new Date();
         Calendar cal = new GregorianCalendar();
@@ -588,25 +607,26 @@ public class InscricaoController extends GenericForwardComposer {
         par.clear();
         List<Estudante> estu = new ArrayList<Estudante>();
         if (usr.getUtilizador() != null) {
-            par.put("user", usr.getUtilizador());
-            Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
-            if (u != null) {
-                par.clear();
-            }
+//            par.put("user", usr.getUtilizador());
+//            Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+//            if (u != null) {
+//                par.clear();
+//            }
+            Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
             par.put("ano", ano);
-            par.put("fac", u.getFaculdade());
+            par.put("fac", f);
             estu = csimpm.findByJPQuery("from Estudante e where e.cursocurrente.faculdade = :fac and e.idEstudante in (select m.estudante from Matricula m where "
                     + "m.matriculaPK.ano = :ano and m.estudante not in (select ma.matriculaPK.idEstudante from Matriculaanulada ma where ma.matriculaPK.ano = :ano))", par);
         }
         return new ListModelList<Estudante>(estu);
     }
-
+    
     public void onCreate$combEstInsc(Event evt) throws IOException {
         if (winInscricao.inModal()) {
             //combEstInsc.setSelectedIndex(1);
 //            combEstInsc.setSelectedItem(combEstInsc.getItems().get(1));
             long ides = Long.parseLong(txx.getText());
-
+            
             if (usr.getUtilizador() == null) {
                 Estudante e = csimpm.get(Estudante.class, ides);
                 combEstInsc.setModel(new ListModelList<Inscricao>(new ArrayList<Inscricao>()));
@@ -639,13 +659,13 @@ public class InscricaoController extends GenericForwardComposer {
         }
 //        
     }
-
+    
     public void oncreate$txx(Event evt) throws IOException {
         if (winInscricao.inModal()) {
             onAddInsc();
         }
     }
-
+    
     public void onAddInsc() throws IOException {//Esta funcao pode trazer apenas o semestre ano.. ou pode seleccionar tudo
         if (usr.getUestudante() && usr.getUtilizador() == null) {
             ((Row) winAddInscricao.getFellow("prazoinsc")).setVisible(false);
@@ -758,7 +778,7 @@ public class InscricaoController extends GenericForwardComposer {
             winAddInscricao.detach();
             Clients.showNotification("Nao existe um plano para o Ano Lectivo!", "error", null, null, 0);
         }
-
+        
         if (usr.getUestudante() || (!usr.getUestudante() && winInscricao.inModal())) {
 //            if (winInscricao.inModal()) {
 //                ides = Long.parseLong(txx.getText());
@@ -782,7 +802,7 @@ public class InscricaoController extends GenericForwardComposer {
                     winAddInscricao.detach();
                     return;
                 }
-
+                
             }
             ((Combobox) winAddInscricao.getFellow("combEstInsc")).setText(e.getNomeCompleto());
 //            ((Combobox) winAddInscricao.getFellow("combEstInsc")).setReadonly(true);
@@ -798,9 +818,9 @@ public class InscricaoController extends GenericForwardComposer {
                     ((Listbox) winAddInscricao.getFellow("discSel")), ((Label) winAddInscricao.getFellow("lbnivel")),
                     ((Label) winAddInscricao.getFellow("lbsexo")), ((Label) winAddInscricao.getFellow("lbcurso")));
         }
-
+        
     }
-
+    
     public void limpForm() {
         combEstInsc.setText("");
         lbcurso.setValue("");
@@ -818,7 +838,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         //    combEstInsc.setValue("Pesquise um Estudante...");
     }
-
+    
     public void limpaLB(Listbox lb) {
         if (lb.getItemCount() > 0) {
             final Iterator<Listitem> items = new ArrayList(lb.getItems()).listIterator();
@@ -830,18 +850,55 @@ public class InscricaoController extends GenericForwardComposer {
             }
         }
     }
-
+    
     public ListModel<Curso> getListaCursoModel() {
         if (usr.getUtilizador() == null) {
             return null;
         }
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.clear();
-        par.put("fac", u.getFaculdade());
-        List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
-        return listaCursoModel = new ListModelList<Curso>(lc);
+        if (f != null) {
+            par.put("fac", f);
+            List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
+            return listaCursoModel = new ListModelList<Curso>(lc);
+        } else {
+            return null;
+        }
     }
-
+    
+    public ListModel<Faculdade> getListaFacModel() {
+        return new ListModelList<Faculdade>(csimpm.getAll(Faculdade.class));
+    }
+    
+    public void onSelectcbfaculdade() {
+        if (cbfaculdade.getSelectedItem() != null) {
+            cbcurso.setModel(new ListModelList<Curso>());
+            cbcurso.setText("-----Curso------");
+            condfac = " and e.cursocurrente.faculdade = :fac";
+            Faculdade f = (Faculdade) cbfaculdade.getSelectedItem().getValue();
+//            if (condpar.containsKey("fac")) {
+//                condpar.replace("fac", f);
+//            } else {
+//                condpar.put("fac", f);
+//            }
+            par.clear();
+            par.put("f", f);
+            condcurso = "";
+            if (condpar.containsKey("curso")) {
+                condpar.remove("curso");
+            }
+            List<Curso> lc2 = csimpm.findByJPQuery("from Curso c where c.faculdade = :f", par);
+            if (lc2 != null && lc2.size() > 0) {
+                cbcurso.setModel(new ListModelList<Curso>(lc2));
+                setLB(0, 20);
+            } else {
+                lbinscricao.setModel(new ListModelList<>());
+            }
+        }
+        
+    }
+    
     public ListModel<Estudante> getListInscricaoModel() {
         List<Estudante> li = null;
         par.clear();
@@ -852,7 +909,7 @@ public class InscricaoController extends GenericForwardComposer {
                 + " i where extract(year from i.dataInscricao) = :ano and i.dataConfirmacao is not null and i.estado is true)", par);
         return new ListModelList<Estudante>(li);
     }
-
+    
     public void getListInscricaoModel2() {
         List<Inscricao> li = null;
         Users u = csimpm.get(Users.class, usr.getUtilizador());
@@ -872,7 +929,7 @@ public class InscricaoController extends GenericForwardComposer {
         lbinscricao.setMultiple(true);
         // return inscric = new ListModelList<Inscricao>(li);
     }
-
+    
     public void onBtncancelar() {
         limpForm();
         if (!usr.getUestudante() && !((Window) winAddInscricao.getParent()).inModal()) {
@@ -1009,9 +1066,9 @@ public class InscricaoController extends GenericForwardComposer {
             }
         }
         buscarDisciplinas(e, discEst, discSel, lbnivel, lbsexo, lbcurso);
-
+        
     }
-
+    
     public void buscarDisciplinas(Estudante e, Listbox discEst, Listbox discSel, Label lbnivel, Label lbsexo, Label lbcurso) {
         //ultimo ano que fez inscricao
         Date dano = new Date();
@@ -1102,7 +1159,7 @@ public class InscricaoController extends GenericForwardComposer {
         if (!e.getMasculino()) {
             lbsexo.setValue("Feminino");
         }
-
+        
         par.clear();
         // int anoi = (e.getAnoIngresso() + e.getNivelFrequencia()) - 1;
         par.put("nivel", e.getNivelFrequencia());
@@ -1112,10 +1169,10 @@ public class InscricaoController extends GenericForwardComposer {
         int nn = nc + 1;
         int c1 = 0;
         int c2 = 0;
-
+        
         int co1 = csimpm.findByJPQuery("from Disciplina d where d.curso=:curso and d.planoc = :planoc and d.semestre = 1 and"
                 + " d.nivel =:nivel and ((d.natraso is not null and d.natraso not like :niv) or d.natraso is null)", par).size();
-
+        
         int co2 = csimpm.findByJPQuery("from Disciplina d where d.curso=:curso and d.planoc = :planoc and d.semestre = 2 and"
                 + " d.nivel =:nivel and ((d.natraso is not null and d.natraso not like :niv) or d.natraso is null)", par).size();
         par.clear();
@@ -1147,12 +1204,12 @@ public class InscricaoController extends GenericForwardComposer {
             //  Messagebox.show("dxfsdf");
         }
         //    }
-        if (true){
+        if (true) {
 //                this.n == e.getNivelFrequencia()) {//"sem == 1 &&" nao entra semestre porque oaluno pode aparecer no 2o sem
             final Long es = e.getIdEstudante();
             final int npl = e.getCursocurrente().getPlanoc();
-            if (e.getPlanoc() < npl && 
-                 e.getNivelFrequencia() <= ((ano - npl) + 1)) {
+            if (e.getPlanoc() < npl
+                    && e.getNivelFrequencia() <= ((ano - npl) + 1)) {
                 Messagebox.show("O estudante encontra-se no nivel de transicao para o novo curriculo.\n "
                         + "Portanto, devera transitar para o novo curriculo!\n Continuar?: ", "", Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
                         new EventListener() {
@@ -1161,7 +1218,7 @@ public class InscricaoController extends GenericForwardComposer {
                                 switch (((Integer) evet.getData()).intValue()) {
                                     case Messagebox.YES:
                                         Estudante estud = csimpm.get(Estudante.class, es);
-
+                                        
                                         par.clear();   //Limpar inscricoes rejeitadas
                                         par.put("est", estud);
                                         List<Inscricao> li = csimpm.findByJPQuery("from Inscricao i where i.idEstudante = :est and i.modoInscricao=7", par);
@@ -1257,7 +1314,7 @@ public class InscricaoController extends GenericForwardComposer {
                                                 id.setTurno(iddi.getTurno());
                                                 id.setInscricaodisciplinaPK(new InscricaodisciplinaPK(ieq.getIdInscricao(), di.getIdDisc()));
                                                 csimpm.Saves(id);
-
+                                                
                                             }
                                         }
                                         estud.setPlanoc(npl);
@@ -1281,9 +1338,9 @@ public class InscricaoController extends GenericForwardComposer {
                 }
                 return;
             }
-
+            
         }
-
+        
         par.clear();
         par.put("semestre", sem);
         par.put("curso", e.getCursocurrente());
@@ -1377,7 +1434,7 @@ public class InscricaoController extends GenericForwardComposer {
                 }
             }
         }
-
+        
         par.clear();  //Disciplinas qua ja escreveu no semestre actual;
         par.put("ide", e);
         par.put("semestre", new Short(sem + ""));
@@ -1409,11 +1466,11 @@ public class InscricaoController extends GenericForwardComposer {
                 d.setNivel(nivelactual);
             }
         }
-
+        
         discEst.setMultiple(false);
         discEst.setModel(new ListModelList<Disciplina>(ldisc));
         discEst.setMultiple(true);
-
+        
         limpaLB(discSel);
         for (Disciplina d : lds) {
             if (d.getNatraso() != null && d.getNatraso().contains(e.getAnoIngresso() + "")) {
@@ -1434,7 +1491,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         ((Label) winAddInscricao.getFellow("lbcred")).setValue(i + "");
     }
-
+    
     public boolean menorLevel(int n) {//verificar se existem 3 nivel abaixo do level
         for (Listitem ide : discEst.getItems()) {
             int ni = ((Disciplina) ide.getValue()).getNivel();
@@ -1446,7 +1503,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         return false;
     }
-
+    
     public boolean nivelMenor(int n) {
         for (Listitem ide : discEst.getItems()) {
             int ni = ((Disciplina) ide.getValue()).getNivel();
@@ -1467,7 +1524,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         return true;
     }
-
+    
     public void onBtnva() {
         //REGRAS
         //  se o nivel for maior ou igual ao level, procura saber se nao existe outro mais menor que
@@ -1567,7 +1624,7 @@ public class InscricaoController extends GenericForwardComposer {
 //                    li.setLabel(" ");
 //                }
                 discSel.appendChild(li);
-
+                
                 discSel.setMultiple(true);
             }
         }
@@ -1583,7 +1640,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         discSel.clearSelection();
     }
-
+    
     public boolean maiorNivelOp(int n) {
         for (Listitem ide : discSel.getItems()) {
             int ni = ((Disciplina) ide.getValue()).getNivel();
@@ -1603,7 +1660,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         return true;
     }
-
+    
     public boolean maiorNivelOb(int n) {
         final Iterator<Listitem> items = new ArrayList(discSel.getItems()).listIterator();
         Listitem ide;
@@ -1625,7 +1682,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         return true;
     }
-
+    
     public void onBtnvem() {
         if (discSel.getSelectedItems().isEmpty()) {
             Clients.showNotification("Seleccione as disciplinas para restaurar", "error", null, null, 0);
@@ -1657,7 +1714,7 @@ public class InscricaoController extends GenericForwardComposer {
         discEst.clearSelection();
         discSel.clearSelection();
     }
-
+    
     public void onSelect$discEst() {
         int i = 0;
         int c = 0;
@@ -1683,7 +1740,7 @@ public class InscricaoController extends GenericForwardComposer {
             lbcred.setStyle("color:#dc291e");
         }
     }
-
+    
     public void onSelect$discEstOp() {
         int i = 0;
         lbcred.setStyle("color:black");
@@ -1709,14 +1766,14 @@ public class InscricaoController extends GenericForwardComposer {
             lbcred.setStyle("color:#dc291e");
         }
     }
-
+    
     public void removerArquivo(List<Arquivoinscricao> la, List<Media> lm) {
         for (int i = 0; i < la.size(); i++) {
             la.remove(i);
             lm.remove(i);
         }
     }
-
+    
     public void onBtnsave() throws IOException {
         int fac = 0;
         int turno = 0, turma = 0;
@@ -1909,7 +1966,7 @@ public class InscricaoController extends GenericForwardComposer {
             } else {
                 Clients.showNotification("O seu pedido de Inscrição foi efectuada com sucesso", null, null, null, 2000);
             }
-
+            
             i = csimpm.load(Inscricao.class, i.getIdInscricao());
             Listbox lb = ((Listbox) ((Window) winAddInscricao.getParent()).getFellow("lbinscricao"));
             if (lb.getListModel() == null) {
@@ -1991,7 +2048,7 @@ public class InscricaoController extends GenericForwardComposer {
             eq = EventQueues.lookup("pinscD" + fac, EventQueues.APPLICATION, true);
             eq.publish(new Event("onPedidoMatD", null, i));
         }
-
+        
         if ((!usr.getUestudante()) && ((Window) winAddInscricao.getParent()).inModal()) {
 //            Estudante est = i.getIdEstudante();
 //            est = csimpm.load(Estudante.class, est.getIdEstudante());
@@ -1999,7 +2056,7 @@ public class InscricaoController extends GenericForwardComposer {
             winAddInscricao.detach();
         }
     }
-
+    
     public void calcularNiveFreq(Estudante e) {
         par.clear();
         // int anoi = (e.getAnoIngresso() + e.getNivelFrequencia()) - 1;
@@ -2011,10 +2068,10 @@ public class InscricaoController extends GenericForwardComposer {
         //     int nn = nc + 1;
         int c1 = 0;
         int c2 = 0;
-
+        
         int co1 = csimpm.findByJPQuery("from Disciplina d where d.curso=:curso and d.planoc = :planoc and d.semestre = 1 and"
                 + " d.nivel =:nivel and ((d.natraso is not null and d.natraso not like :niv) or d.natraso is null)", par).size();
-
+        
         int co2 = csimpm.findByJPQuery("from Disciplina d where d.curso=:curso and d.planoc = :planoc and d.semestre = 2 and"
                 + " d.nivel =:nivel and ((d.natraso is not null and d.natraso not like :niv) or d.natraso is null)", par).size();
         par.clear();
@@ -2032,7 +2089,7 @@ public class InscricaoController extends GenericForwardComposer {
                 + " and id.estado is true and ((id.notaFinal is not null and id.notaFinal >= 10) or (id.notaFinal is null and extract(year from id.inscricao.dataInscricao) < :ano)))", par).size();
         //  if (sem == 1) {
         //   if (((co1 - c1) <= 2) && ((co2 - c2) <= 2)) {// so no primeiro semestre
-   //       Messagebox.show(co1+" - "+c1+"+) + ("+co2+" - "+c2);
+        //       Messagebox.show(co1+" - "+c1+"+) + ("+co2+" - "+c2);
         int t1 = 0, t2 = 0;
         if (co1 >= c1) {
             t1 = co1 - c1;
@@ -2044,8 +2101,8 @@ public class InscricaoController extends GenericForwardComposer {
             nactual = nactual + 1;
             int nc = nactual;//e.getNivelFrequencia();
             int nc2 = nc;
-             c1 = 0;
-             c2 = 0;
+            c1 = 0;
+            c2 = 0;
             par.clear();
             par.put("curso", e.getCursocurrente());
             par.put("nivel", nc);
@@ -2068,13 +2125,13 @@ public class InscricaoController extends GenericForwardComposer {
             c2 = csimpm.findByJPQuery("from Inscricaodisciplina id where id.inscricao.idEstudante = :e and "
                     + "id.disciplina.nivel = :anoi and id.disciplina.planoc = :planoc and id.disciplina.semestre = 2 and (id.disciplinaActiva = 3"
                     + " and id.estado is true and extract(year from id.inscricao.dataInscricao) = :ano)", par).size();//  and ((id.notaFinal is not null and id.notaFinal >= 10))or id.notaFinal is null
-          //  Messagebox.show("1");
-             if (c1 != 0 || c2 != 0) {
-                  //  nc2 = nc2 + 1;
-                 e.setNivelFrequencia(nc2);
-               //   Messagebox.show("2");
+            //  Messagebox.show("1");
+            if (c1 != 0 || c2 != 0) {
+                //  nc2 = nc2 + 1;
+                e.setNivelFrequencia(nc2);
+                //   Messagebox.show("2");
                 csimpm.update(e);
-                }
+            }
 //            if (nc2 > nc) {
 //                
 //            }
@@ -2115,7 +2172,7 @@ public class InscricaoController extends GenericForwardComposer {
 //            csimpm.update(e);
 //        }
     }
-
+    
     public void onBtnAvancar1() {
         if ((combEstInsc.getSelectedItem() == null && combEstInsc.isButtonVisible()) || discSel.getItemCount() == 0) {
             Clients.showNotification("Por favor, seleccione um estudante e as respectivas disciplinas", "error", null, null, 0);
@@ -2136,7 +2193,7 @@ public class InscricaoController extends GenericForwardComposer {
         tabPagamentoTaxa.setSelected(true);
         preenchTabPagementoTaxa();
     }
-
+    
     public void onSwitchTab$tabPagamentoTaxa(ForwardEvent evt) {
         if ((combEstInsc.getSelectedItem() == null && combEstInsc.isButtonVisible()) || discSel.getItemCount() == 0) {
             Clients.showNotification("Por favor, seleccione um estudante e as respectivas disciplinas", "error", null, null, 0);
@@ -2159,12 +2216,12 @@ public class InscricaoController extends GenericForwardComposer {
         tab.setSelected(true);
         preenchTabPagementoTaxa();
     }
-
+    
     public void onSwitchTab$tabDadosInscricao(ForwardEvent evt) {
         final Tab tab = (Tab) evt.getOrigin().getTarget();
         tab.setSelected(true);
     }
-
+    
     public void preenchTabPagementoTaxa() {
         Date dano = new Date();
         Calendar cal = new GregorianCalendar();
@@ -2251,7 +2308,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         lbtotal.setValue(total + "");
     }
-
+    
     public void onChanging$ibmulta(InputEvent evt) {
         if (!evt.getValue().equals("")) {
             if (evt.getValue().equals("0")) {
@@ -2264,11 +2321,11 @@ public class InscricaoController extends GenericForwardComposer {
             }
         }
     }
-
+    
     public static void setMediaTaxa(Media media) {
         mediaCPI = media;
     }
-
+    
     public void onVerDisc(ForwardEvent evt) throws Exception {
         winAddInscricaoDisc.setParent(winInscricao);
         winAddInscricaoDisc.doModal();
@@ -2285,7 +2342,7 @@ public class InscricaoController extends GenericForwardComposer {
         ((Listbox) winAddInscricaoDisc.getFellow("lbdiscInsc")).setModel(new ListModelList<Inscricaodisciplina>(ldisc));
         ((Listbox) winAddInscricaoDisc.getFellow("lbdiscInsc")).setMultiple(true);
     }
-
+    
     public void onClick$btnCancDisc() { //nao existe
         if (!usr.getUestudante()) {
             lbinscricao.setModel(getListInscricaoModel());
@@ -2374,7 +2431,7 @@ public class InscricaoController extends GenericForwardComposer {
         ((Label) win.getFellow("lbNome")).setValue(id.getInscricao().getIdEstudante().getNomeCompleto());
         ((Intbox) win.getFellow("idest")).setValue(id.getInscricao().getIdEstudante().getIdEstudante().intValue());
     }
-
+    
     public void onRegistarAnulacao() throws IOException {
         final Disciplinaanulada da = new Disciplinaanulada();
         da.setDataanulacao(new Date());
@@ -2457,17 +2514,18 @@ public class InscricaoController extends GenericForwardComposer {
                                     csimpm.update(idis);
                                 }
                                 lb.clearSelection();
+                                Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
                                 if (usr.getUestudante()) {
                                     Clients.showNotification("Pedido de Anulação enviado com sucesso", null, null, null, 2000);
                                     // getListInscricaoModel2();
-                                    eq = EventQueues.lookup("pinscA" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                    eq = EventQueues.lookup("pinscA" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onPedidoMatD", null, da));
 //                                    eq = EventQueues.lookup("pinscA" + da.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
 //                                    eq.publish(new Event("onPedidoMatD", null, da));
                                 } else {
                                     Clients.showNotification("Inscrição Anulada com sucesso", null, null, null, 2000);
                                 }
-                                eq = EventQueues.lookup("anula" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                eq = EventQueues.lookup("anula" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMat", null, da));
                                 eq = EventQueues.lookup("anula" + da.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMat", null, da));
@@ -2479,11 +2537,11 @@ public class InscricaoController extends GenericForwardComposer {
                     }
                 });
     }
-
+    
     public void onCancAnul() {
         winAnularI.detach();
     }
-
+    
     public void onSelect$lbdiscInsc() {
         if (lbdiscInsc.getSelectedCount() > 0) {
             btnAnular.setDisabled(false);
@@ -2491,7 +2549,7 @@ public class InscricaoController extends GenericForwardComposer {
             btnAnular.setDisabled(true);
         }
     }
-
+    
     public void onActivar(ForwardEvent evt) {
         Button btn = (Button) evt.getOrigin().getTarget();
         Listitem litem = (Listitem) btn.getParent().getParent();
@@ -2501,11 +2559,11 @@ public class InscricaoController extends GenericForwardComposer {
         btn.setVisible(false);
         csimpm.update(id);
     }
-
+    
     public ListModel<Disciplina> getDiscRelModel() {
         return new ListModelList<Disciplina>(csimpm.getAll(Disciplina.class));
     }
-
+    
     public ListModel<Curso> getCursoRelModel() {
         return new ListModelList<Curso>(csimpm.getAll(Curso.class));
     }
@@ -2549,10 +2607,10 @@ public class InscricaoController extends GenericForwardComposer {
     public void onModal$winAddInscricaoDisc() {
         btnAnular.setVisible(false);
     }
-
+    
     private void limpar(Component component) {
         limparComp(component);
-
+        
         if (component.isVisible()) {
             List<Component> children = component.getChildren();
             for (Component each : children) {
@@ -2560,7 +2618,7 @@ public class InscricaoController extends GenericForwardComposer {
             }
         }
     }
-
+    
     public void limparComp(Component component) {
         Constraint co = null;
         if (component instanceof InputElement) {
@@ -2576,7 +2634,7 @@ public class InscricaoController extends GenericForwardComposer {
             }
         }
     }
-
+    
     public void onVerMotivo(ForwardEvent evt) {
         Inscricao i = (Inscricao) ((Listitem) evt.getOrigin().getTarget().getParent().getParent()).getValue();
         Window w = new Window();
@@ -2594,7 +2652,7 @@ public class InscricaoController extends GenericForwardComposer {
         w.setParent(winInscricao);
         w.doModal();
     }
-
+    
     public void onVerMotivoAnu(ForwardEvent evt) {
         Inscricaodisciplina i = (Inscricaodisciplina) ((Listitem) evt.getOrigin().getTarget().getParent().getParent()).getValue();
         i = csimpm.load(Inscricaodisciplina.class, i.getInscricaodisciplinaPK());
@@ -2631,11 +2689,11 @@ public class InscricaoController extends GenericForwardComposer {
         w.setParent(winInscricao);
         w.doModal();
     }
-
+    
     public void onClick$mm() {
         Messagebox.show("dfd");
     }
-
+    
     public void onVerRequerimento(Event evt) throws FileNotFoundException, IOException {
         Intbox it = (Intbox) evt.getTarget().getParent().getChildren().get(1);
         Disciplinaanulada da = csimpm.load(Disciplinaanulada.class, it.getValue());
@@ -2657,7 +2715,7 @@ public class InscricaoController extends GenericForwardComposer {
 //        org.zkoss.util.media.Media amedia = new org.zkoss.util.media.AMedia(m.getName(), m.getFormat(), m.getContentType(), m.getStreamData());
         iframe.setContent(mm);
     }
-
+    
     public void onVerInscricao(ForwardEvent evt) {
         Button buton = (Button) evt.getOrigin().getTarget();
         Listitem item = (Listitem) buton.getParent().getParent();
@@ -2716,7 +2774,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         lbinscricao.clearSelection();
     }
-
+    
     public void onPInsc(ForwardEvent evt) {
 //        Window win = (Window) Executions.createComponents("/inscricao/inscricaoequivalencia.zul", winAddInscricao, null);
 //        ((Textbox) win.getFellow("est")).setText(694 + "");
@@ -2724,7 +2782,7 @@ public class InscricaoController extends GenericForwardComposer {
 
         Executions.createComponents("inscricao/inscricaoestudante.zul", winInscricao, null);
     }
-
+    
     public void onClose$winanularmot(Event evt) {
         Users user = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
@@ -2763,7 +2821,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         setLB(0, 20);
     }
-
+    
     public void onClick$manoi(Event e) throws InterruptedException {
         ibProcAno.setVisible(manoi.isChecked());
         if (manoi.isChecked()) {
@@ -2779,7 +2837,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         setLB(0, 20);
     }
-
+    
     public void onChanging$txProcurar(InputEvent evt) {
         if (!evt.getValue().equals("") && evt.getValue().charAt(0) != '.') {
             condnome = " and lower(e.nomeCompleto) like :nome ";
@@ -2797,7 +2855,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         setLB(0, 20);
     }
-
+    
     public void onChanging$ibProcAno(InputEvent evt) {
         if (!evt.getValue().equals("") && evt.getValue().charAt(0) != '.') {
             condano = " and extract(year from i.dataInscricao) = :a ";
@@ -2815,7 +2873,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         setLB(0, 20);
     }
-
+    
     public void onChange$cbcurso() {
         // if (cbcurso.getSelectedIndex() != 0) {
         condcurso = " and e.cursocurrente = :curso ";
@@ -2826,7 +2884,7 @@ public class InscricaoController extends GenericForwardComposer {
         }
         setLB(0, 20);
     }
-
+    
     public void setLB(int i, int j) {
         if (i == 0) {
             lbinscricao.setModel(new ListModelList<Prescricao>());
@@ -2847,7 +2905,7 @@ public class InscricaoController extends GenericForwardComposer {
             btv.setVisible(true);
         }
     }
-
+    
     public void onLoadi() {
         int i = pos;
         setLB(i, i + 20);
@@ -2877,9 +2935,9 @@ public class InscricaoController extends GenericForwardComposer {
         combEstInsc.getItems().clear();
         setLBComb(0, 20);
     }
-
+    
     public void onOpen$combEstInsc() {
-
+        
         if (pesq == null) {
             //   Messagebox.show("esta");
             //  combEstInsc.getItems().clear();
@@ -2897,20 +2955,21 @@ public class InscricaoController extends GenericForwardComposer {
             }
         }
     }
-
+    
     public void setLBComb(int i, int j) {
         if (j == 20) {
             combEstInsc.setModel(new ListModelList<Estudante>());
         }
         List<Estudante> li = null;
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+       // Users u = csimpm.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         // par.clear();
         Date dano = new Date();
         Calendar cal = new GregorianCalendar();
         cal.setTime(dano);
         int ano = cal.get(Calendar.YEAR);
         cbpar.put("ano", ano);
-        cbpar.put("fac", u.getFaculdade());
+        cbpar.put("fac", f);
         li = csimpm.findByJPQueryFilter("from Estudante e where e.cursocurrente.faculdade = :fac " + condn + " and e.idEstudante in (select m.estudante from Matricula m where "
                 + "m.matriculaPK.ano = :ano and m.estudante not in (select ma.matriculaPK.idEstudante from Matriculaanulada ma where ma.matriculaPK.ano = :ano)) order by e.nomeCompleto", cbpar, i, j);
         final Iterator<Estudante> items = li.iterator();
@@ -2931,12 +2990,12 @@ public class InscricaoController extends GenericForwardComposer {
             posc.setValue(((ListModelList) combEstInsc.getModel()).size());
         }
     }
-
+    
     public void onLoadComb() {
         int i = ((ListModelList) combEstInsc.getModel()).size() - 1;
         setLBComb(i, i + 20);
     }
-
+    
     public void onExcelExport() throws ParseException {
         if (lbinscricao.getItemCount() == 0) {
             Clients.showNotification("Sem conteúdo", "warning", null, null, 3000);
@@ -2946,15 +3005,15 @@ public class InscricaoController extends GenericForwardComposer {
         beanToExcel.setDataSheetName("Grade de Notas");
         beanToExcel.exportExcell(lbinscricao);
     }
-
+    
     public void onRefresh() {
         par.clear();
         par.put("nome", combEstInsc.getText());
         Estudante e = csimpm.findEntByJPQuery("from Estudante e where e.nomeCompleto = :nome", par);
         refre(e);
-
+        
     }
-
+    
     public void refre(Estudante e) {
         if (e != null) {
             int nc = 1;
@@ -2990,7 +3049,7 @@ public class InscricaoController extends GenericForwardComposer {
                 par.put("niv", "%" + e.getAnoIngresso() + "%");
                 co1 = csimpm.findByJPQuery("from Disciplina d where d.curso=:curso and d.planoc = :planoc and d.semestre = 1 and"
                         + " d.nivel =:nivel and ((d.natraso is not null and d.natraso not like :niv) or d.natraso is null)", par).size();
-
+                
                 co2 = csimpm.findByJPQuery("from Disciplina d where d.curso=:curso and d.planoc = :planoc and d.semestre = 2 and"
                         + " d.nivel =:nivel and ((d.natraso is not null and d.natraso not like :niv) or d.natraso is null)", par).size();
 
@@ -3068,7 +3127,7 @@ public class InscricaoController extends GenericForwardComposer {
             }
         }
     }
-
+    
     public void onEditar(ForwardEvent evt) throws FileNotFoundException, IOException {
         Button btn = (Button) evt.getOrigin().getTarget();
         Listitem litem = (Listitem) btn.getParent().getParent();
@@ -3182,7 +3241,7 @@ public class InscricaoController extends GenericForwardComposer {
                             }
                             recibousado = recibousado + "\n" + rs + "\n" + rs2;
                         }
-
+                        
                         if (!am3.getNrtalao().equals("0")) {
                             lm3.add(new Arquivo(am3.getNrtalao(), mm, mm.getName(), am3.getBanco(), am3.getValor(), am3.getEstudante(), am3.getDatadeposito()));
                         } else {
@@ -3199,10 +3258,10 @@ public class InscricaoController extends GenericForwardComposer {
             }
             ((Listbox) win.getFellow("lbimg")).setModel(new ListModelList(lm3));
             ((Listbox) win.getFellow("lbimgII")).setModel(new ListModelList(lm4));
-
+            
         }
     }
-
+    
     public void onVerInfo(ForwardEvent evt) throws JRException, IOException {
         Button btn = (Button) evt.getOrigin().getTarget();
         Listitem litem = (Listitem) btn.getParent().getParent();
@@ -3241,10 +3300,10 @@ public class InscricaoController extends GenericForwardComposer {
         } else {
             params.put("data", null);
         }
-
+        
         JasperPrint jasperPrint = JasperFillManager.fillReport(path + "/inscricao.jasper", params, ds);
         JRPdfExporter exporter = new JRPdfExporter();
-
+        
         ByteArrayOutputStream bytesOutputStream = new ByteArrayOutputStream();
         BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(bytesOutputStream);
         exporter.setParameter(JRExporterParameter.JASPER_PRINT, jasperPrint);
@@ -3253,12 +3312,12 @@ public class InscricaoController extends GenericForwardComposer {
         Iframe iframe = (Iframe) win.getFellow("report");
         InputStream mediais = new ByteArrayInputStream(bytesOutputStream.toByteArray());
         bytesOutputStream.close();
-
+        
         AMedia amedia = new AMedia(i.getIdEstudante().getNomeCompleto() + ".pdf", "pdf", "application/pdf", mediais);
-
+        
         iframe.setContent(amedia);
     }
-
+    
     public void onVerObs(ForwardEvent evt) {
         Inscricao i = (Inscricao) ((Listitem) evt.getOrigin().getTarget().getParent().getParent()).getValue();
         i = csimpm.load(Inscricao.class, i.getIdInscricao());
@@ -3298,7 +3357,7 @@ public class InscricaoController extends GenericForwardComposer {
         w.setParent(winInscricao);
         w.doModal();
     }
-
+    
     public void onSalvar(final Event evt) throws FileNotFoundException, IOException {
         Intbox it = (Intbox) evt.getTarget().getParent().getChildren().get(1);
         final Inscricao m = csimpm.load(Inscricao.class, it.getValue().longValue());

@@ -47,10 +47,7 @@ public class Grupo implements Serializable {
     private List<Roles> rolesList;
     @OneToMany(mappedBy = "idGrupo", fetch = FetchType.LAZY)
     private List<Users> usersList1;
-    @JoinTable(name = "usergrupo", joinColumns = {
-        @JoinColumn(name = "id_grupo", referencedColumnName = "id_grupo", nullable = false)}, inverseJoinColumns = {
-        @JoinColumn(name = "utilizador", referencedColumnName = "utilizador", nullable = false)})
-    @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "grupoList", fetch = FetchType.LAZY)
     private List<Users> usersList;
 
     public Grupo() {

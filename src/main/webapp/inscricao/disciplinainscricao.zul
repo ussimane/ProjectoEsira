@@ -25,12 +25,22 @@
                 <image src="/icon/search.png"/>
                 <intbox hflex="1" id="anoi" constraint=" no Empty: Insira o ano!"/>
  
-                <combobox hflex="1" readonly="true" id="cbPeriodDisc" onCreate="self.setSelectedIndex(0)" >
+                <combobox hflex="1" readonly="true" id="cbPeriodDisc" >
+                    <attribute name="onCreate"><![CDATA[
+                            if((self.getModel()!=null) && self.getModel().getSize()>0){
+                               self.setSelectedIndex(0);
+                            }                           
+                        ]]></attribute> 
                     <comboitem label="Semestre 1" value="1"/>
                     <comboitem label="Semestre 2" value="2"/>
                 </combobox>
  
-                <combobox hflex="1" id="cbcurso" readonly="true" tooltiptext="Curso" model="${$composer.cursoModel}" onCreate="self.setSelectedIndex(0)"  autodrop="true" >
+                <combobox hflex="1" id="cbcurso" readonly="true" tooltiptext="Curso" model="${$composer.cursoModel}" autodrop="true" >
+                    <attribute name="onCreate"><![CDATA[
+                            if((self.getModel()!=null) && self.getModel().getSize()>0){
+                               self.setSelectedIndex(0);
+                            }                           
+                        ]]></attribute> 
                     <comboitem label="${each.nome}"/>
                 </combobox>
                 

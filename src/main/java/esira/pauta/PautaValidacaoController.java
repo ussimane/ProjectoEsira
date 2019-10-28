@@ -10,6 +10,7 @@ import entidade.DisciplinaEstudante;
 import esira.domain.Curso;
 import esira.domain.Disciplina;
 import esira.domain.Estudante;
+import esira.domain.Faculdade;
 import esira.domain.Inscricao;
 import esira.domain.Inscricaodisciplina;
 import esira.domain.Matriculaanulada;
@@ -96,14 +97,15 @@ public class PautaValidacaoController extends GenericForwardComposer {
         Date dano = new Date();
         Calendar cal = new GregorianCalendar();
         cal.setTime(dano);
-        parcond.put("a",cal.get(Calendar.YEAR));
-        setLB(0,20);
+        parcond.put("a", cal.get(Calendar.YEAR));
+        setLB(0, 20);
     }
 
     public ListModel<Curso> getCursoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        // Users u = csimpm.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        par.put("fac", f);
         List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
         return new ListModelList<Curso>(lc);
     }
@@ -112,14 +114,14 @@ public class PautaValidacaoController extends GenericForwardComposer {
         if (!evt.getValue().equals("")) {
             //check(ahead);
             anoi.setValue(Integer.parseInt(evt.getValue()));
-            setLB(0,20);
+            setLB(0, 20);
         }
     }
 
     public void onSelect$cbPeriodDisc() {
         if (cbPeriodDisc.getSelectedItem() != null) {
-        //    check(ahead);
-            setLB(0,20);
+            //    check(ahead);
+            setLB(0, 20);
         }
     }
 
@@ -138,7 +140,7 @@ public class PautaValidacaoController extends GenericForwardComposer {
     public void onSelect$cbDisc() {
         if (cbDisc.getSelectedItem() != null) {
             check(ahead);
-            setLB(0,20);
+            setLB(0, 20);
         }
     }
 
@@ -183,7 +185,7 @@ public class PautaValidacaoController extends GenericForwardComposer {
                 ++ind;
             }
             int r = lbpauta.getRows();
-               lbpauta.setRows(r - k);
+            lbpauta.setRows(r - k);
         } else {
             buton.setImage("/icon/down.png");
             List<DisciplinaEstudante> lde = new ArrayList<DisciplinaEstudante>();
@@ -192,7 +194,7 @@ public class PautaValidacaoController extends GenericForwardComposer {
             while (items2.hasNext()) {
                 d = items2.next();
                 DisciplinaEstudante de;
-               
+
                 par.replace("d", d);
                 List<Inscricaodisciplina> lid = csimpm.findByJPQuery("from Inscricaodisciplina id where id.inscricao.idEstudante = :e"
                         + " and id.estado is true and id.notaFinal is not null " + condrep + " and id.disciplina = :d order by"
@@ -203,11 +205,11 @@ public class PautaValidacaoController extends GenericForwardComposer {
                     de.setInscricaodisciplina(id);
                     lde.add(de);
                 }
-                if(lid.isEmpty()){
+                if (lid.isEmpty()) {
                     de = new DisciplinaEstudante();
-                     de.setDisciplina(d);
-                   de.setInscricaodisciplina(null);
-                   lde.add(de);
+                    de.setDisciplina(d);
+                    de.setInscricaodisciplina(null);
+                    lde.add(de);
                 }
             }
             int k = ((ListModelList) l.getListModel()).getSize() + 1;
@@ -217,21 +219,19 @@ public class PautaValidacaoController extends GenericForwardComposer {
                 de.setId(new Long(e.getIdEstudante()));
                 l.setMultiple(false);
                // l.setSizedByContent(false);
-             //  l.getListhead().setSizable(false);
+                //  l.getListhead().setSizable(false);
                 ((ListModelList) l.getListModel()).add(ind, de);
                // l.setSizedByContent(true);
-             //   l.getListhead().setSizable(true);
+                //   l.getListhead().setSizable(true);
                 l.setMultiple(true);
             }
         }
     }
 
-    
-
     public void onExcelExport() throws ParseException {
-        if(lbpauta.getItemCount()==0){
-           Clients.showNotification("Sem conteúdo","warning", null, null, 3000);
-           return;
+        if (lbpauta.getItemCount() == 0) {
+            Clients.showNotification("Sem conteúdo", "warning", null, null, 3000);
+            return;
         }
         BeanToExcel beanToExcel = new BeanToExcel();
         beanToExcel.setDataSheetName("Grade de Notas");
@@ -245,55 +245,61 @@ public class PautaValidacaoController extends GenericForwardComposer {
         } else {
             condrep = " and id.notaFinal >= 10 ";
         }
-        setLB(0,20);
+        setLB(0, 20);
     }
 
     public void onChanging$txProcNrmec(InputEvent evt) {
-            if (!evt.getValue().equals("")&&evt.getValue().charAt(0) != '.') {
-                condnr = " and e.nrEstudante = :nr ";
-                if (parcond.containsKey("nr")) {
-                    parcond.replace("nr", evt.getValue());
-                } else {
-                    parcond.put("nr", evt.getValue());
-                }
+        if (!evt.getValue().equals("") && evt.getValue().charAt(0) != '.') {
+            condnr = " and e.nrEstudante = :nr ";
+            if (parcond.containsKey("nr")) {
+                parcond.replace("nr", evt.getValue());
             } else {
-                condnr = "";
-                if (!parcond.containsKey("nr")) return;
-                    parcond.remove("nr");
+                parcond.put("nr", evt.getValue());
             }
-            setLB(0,20);
+        } else {
+            condnr = "";
+            if (!parcond.containsKey("nr")) {
+                return;
+            }
+            parcond.remove("nr");
+        }
+        setLB(0, 20);
     }
 
     public void onChanging$txProcurar(InputEvent evt) {
-            if (!evt.getValue().equals("")&&evt.getValue().charAt(0) != '.') {
-                condnome = " and lower(e.nomeCompleto) like :nome ";
-                if (parcond.containsKey("nome")) {
-                    parcond.replace("nome", "%" + evt.getValue().toLowerCase() + "%");
-                } else {
-                    parcond.put("nome", "%" + evt.getValue().toLowerCase() + "%");
-                }
+        if (!evt.getValue().equals("") && evt.getValue().charAt(0) != '.') {
+            condnome = " and lower(e.nomeCompleto) like :nome ";
+            if (parcond.containsKey("nome")) {
+                parcond.replace("nome", "%" + evt.getValue().toLowerCase() + "%");
             } else {
-                condnome = "";
-                if (!parcond.containsKey("nome")) return;
-                    parcond.remove("nome");
+                parcond.put("nome", "%" + evt.getValue().toLowerCase() + "%");
             }
-            setLB(0,20);
+        } else {
+            condnome = "";
+            if (!parcond.containsKey("nome")) {
+                return;
+            }
+            parcond.remove("nome");
+        }
+        setLB(0, 20);
     }
 
     public void onChanging$ibProcAno(InputEvent evt) {
-        if (!evt.getValue().equals("")&&evt.getValue().charAt(0) != '.') {
-                condano = " and e.anoIngresso = :a ";
-                if (parcond.containsKey("a")) {
-                    parcond.replace("a", Integer.parseInt(evt.getValue()));
-                } else {
-                    parcond.put("a", Integer.parseInt(evt.getValue()));
-                }
+        if (!evt.getValue().equals("") && evt.getValue().charAt(0) != '.') {
+            condano = " and e.anoIngresso = :a ";
+            if (parcond.containsKey("a")) {
+                parcond.replace("a", Integer.parseInt(evt.getValue()));
             } else {
-                condano = "";
-                if (!parcond.containsKey("a"))return;
-                    parcond.remove("a");
+                parcond.put("a", Integer.parseInt(evt.getValue()));
             }
-            setLB(0,20);
+        } else {
+            condano = "";
+            if (!parcond.containsKey("a")) {
+                return;
+            }
+            parcond.remove("a");
+        }
+        setLB(0, 20);
     }
 
 //    public void onChange$cbcurso() {
@@ -306,7 +312,6 @@ public class PautaValidacaoController extends GenericForwardComposer {
 //        }
 //        setLB(0, 20);
 //    }
-
     public void setLB(int i, int j) {
         if (j == 20) {
             lbpauta.setModel(new ListModelList<Pauta>());
@@ -332,7 +337,6 @@ public class PautaValidacaoController extends GenericForwardComposer {
 ////        int i = pos;
 ////        setLB(i, i + 20);
 ////    }
-
     private void check(Component component) {
         checkIsValid(component);
 

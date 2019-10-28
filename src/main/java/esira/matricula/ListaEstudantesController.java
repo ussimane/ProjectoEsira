@@ -16,6 +16,7 @@ import esira.domain.Endereco;
 import esira.domain.Enderecof;
 import esira.domain.Estadocivil;
 import esira.domain.Estudante;
+import esira.domain.Faculdade;
 import esira.domain.Ingressobolseiro;
 import esira.domain.Ingressoexameadmissao;
 import esira.domain.Ingressomudancauniversidade;
@@ -155,29 +156,29 @@ public class ListaEstudantesController extends GenericForwardComposer {
     }
 
     public void onSetQueueEstMat() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         if (!usr.getUestudante()) {
-            eq = EventQueues.lookup("mat" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+            eq = EventQueues.lookup("mat" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoP());
-            eq = EventQueues.lookup("rmatD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+            eq = EventQueues.lookup("rmatD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoP());
         } else {
-            eq = EventQueues.lookup("mat" + u.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
+            eq = EventQueues.lookup("mat" + usr.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoMatE());
-            eq = EventQueues.lookup("rmatD" + u.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
+            eq = EventQueues.lookup("rmatD" + usr.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoPE());
-            eq = EventQueues.lookup("rmatA" + u.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
+            eq = EventQueues.lookup("rmatA" + usr.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoIAE());
-            eq = EventQueues.lookup("anulaM" + u.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
+            eq = EventQueues.lookup("anulaM" + usr.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoAnulE());
         }
     }
 
     public void onSetQueueEstMatAnul() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
-        eq = EventQueues.lookup("rmatA" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+       //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        eq = EventQueues.lookup("rmatA" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEventoAnulacao());
-        eq = EventQueues.lookup("anulaM" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        eq = EventQueues.lookup("anulaM" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEventoAnulacao());
     }
 
@@ -300,9 +301,10 @@ public class ListaEstudantesController extends GenericForwardComposer {
         Map<String, Object> par = new HashMap<String, Object>();
         par.clear();
         par.put("user", usr.getUtilizador());
-        Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+       // Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         par.put("ano", c.get(Calendar.YEAR));
         listaM = csimpm.findByJPQuery("select k from Matricula k where k.estudante.estado is true "
                 + " k.dataMatricula in (select max(m.dataMatricula) from Matricula m "
@@ -926,9 +928,10 @@ public class ListaEstudantesController extends GenericForwardComposer {
         Calendar c = Calendar.getInstance();
         Map<String, Object> par = new HashMap<String, Object>();
         par.clear();
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+       // Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Matriculaanulada> lma = csimpm.findByJPQuery("from Matriculaanulada ma where ma.dataconfirmacao is not null and ma.estado is true and"
                 + " ma.matricula.curso.faculdade = :fac order by ma.dataAnulacao desc", par);
         return new ListModelList<Matriculaanulada>(lma);
@@ -936,9 +939,10 @@ public class ListaEstudantesController extends GenericForwardComposer {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     public ListModel<Curso> getListaCursoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+       //Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
         return listaCursoModel = new ListModelList<Curso>(lc);
     }

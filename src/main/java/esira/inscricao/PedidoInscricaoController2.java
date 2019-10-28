@@ -15,6 +15,7 @@ import esira.domain.Curso;
 import esira.domain.Disciplina;
 import esira.domain.Disciplinaanulada;
 import esira.domain.Estudante;
+import esira.domain.Faculdade;
 import esira.domain.Funcionario;
 import esira.domain.Grupo;
 import esira.domain.Inscricao;
@@ -166,12 +167,12 @@ public class PedidoInscricaoController2 extends GenericForwardComposer {
 //    }
 
     public void onSetQueuePI() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
-        eq = EventQueues.lookup("pinscD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        eq = EventQueues.lookup("pinscD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEvento());
-        eq = EventQueues.lookup("rinscD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        eq = EventQueues.lookup("rinscD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEvento2());
-        eq = EventQueues.lookup("rinscRD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        eq = EventQueues.lookup("rinscRD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEvento2());
     }
 
@@ -273,10 +274,11 @@ public class PedidoInscricaoController2 extends GenericForwardComposer {
         int ano = cal.get(Calendar.YEAR);
         par.clear();
         par.put("user", usr.getUtilizador());
-        Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+       // Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.clear();
         par.put("ano", ano);
-        par.put("fac", u.getFaculdade());
+        par.put("fac", f);
         List<Estudante> estu = csimpm.findByJPQuery("from Estudante e where e.cursocurrente.faculdade = :fac and e.idEstudante in (select m.estudante from Matricula m where "
                 + "extract(year from m.dataMatricula) = :ano and m.estudante not in (select ma.matriculaPK.idEstudante from Matriculaanulada ma where ma.matriculaPK.ano = :ano))", par);
         return new ListModelList<Estudante>(estu);
@@ -561,9 +563,10 @@ public class PedidoInscricaoController2 extends GenericForwardComposer {
         List<Inscricao> li = null;
         par.clear();
         par.put("user", usr.getUtilizador());
-        Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+        //Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        par.put("fac", f);
         li = csimpm.findByJPQuery("from Inscricao i where i.idEstudante.cursocurrente.faculdade = :fac and i.dataConfirmacao is null", par);
         return new ListModelList<Inscricao>(li);
     }
@@ -998,6 +1001,7 @@ public class PedidoInscricaoController2 extends GenericForwardComposer {
                             case Messagebox.YES:
                                 Inscricao i = null;
                                 Users u = csimpm.get(Users.class, usr.getUtilizador());
+                                Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
                                 Transaction t = csimpm.getTransacao();
                                 try {
                                     t.begin();
@@ -1136,7 +1140,7 @@ public class PedidoInscricaoController2 extends GenericForwardComposer {
                                         } else {
                                             tipopedido = "g7";
                                         }
-                                        ValidacaopendentePK vpk = new ValidacaopendentePK(u.getFaculdade().getIdFaculdade(), tipopedido);
+                                        ValidacaopendentePK vpk = new ValidacaopendentePK(f.getIdFaculdade(), tipopedido);
                                         Validacaopendente vp = csimpm.getLocked(Validacaopendente.class, vpk);
                                         if (vp != null) {
                                             if ((vp.getQtd() - 1) < 0) {
@@ -1148,14 +1152,14 @@ public class PedidoInscricaoController2 extends GenericForwardComposer {
                                         } else {
                                             vp = new Validacaopendente();
                                             vp.setValidacaopendentePK(vpk);
-                                            vp.setFaculdade(u.getFaculdade());
+                                            vp.setFaculdade(f);
                                             vp.setQtd(0);
                                             csimpm.Saves(vp);
                                         }
-                                        eq = EventQueues.lookup("valid" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                        eq = EventQueues.lookup("valid" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                         eq.publish(new Event("onValidIns", null, vp));
                                     }//
-                                    eq = EventQueues.lookup("mmm" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                    eq = EventQueues.lookup("mmm" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onRinscD", null, i));
                                     eq = EventQueues.lookup("mmmk" + i.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onRinscEstud", null, i));
@@ -1359,6 +1363,7 @@ public class PedidoInscricaoController2 extends GenericForwardComposer {
                                 Long idi = ((Intbox) ((Window) winAddMotivo.getParent()).getFellow("ibidInsc")).getValue().longValue();
                                 Inscricao i = null;
                                 Users u = csimpm.get(Users.class, usr.getUtilizador());
+                                Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
                                 Transaction t = csimpm.getTransacao();
                                 try {
                                     t.begin();
@@ -1430,7 +1435,7 @@ public class PedidoInscricaoController2 extends GenericForwardComposer {
                                     } else {
                                         tipopedido = "g7";
                                     }
-                                    ValidacaopendentePK vpk = new ValidacaopendentePK(u.getFaculdade().getIdFaculdade(), tipopedido);
+                                    ValidacaopendentePK vpk = new ValidacaopendentePK(f.getIdFaculdade(), tipopedido);
                                     Validacaopendente vp = csimpm.getLocked(Validacaopendente.class, vpk);
                                     if (vp != null) {
                                         if ((vp.getQtd() - 1) < 0) {
@@ -1442,14 +1447,14 @@ public class PedidoInscricaoController2 extends GenericForwardComposer {
                                     } else {
                                         vp = new Validacaopendente();
                                         vp.setValidacaopendentePK(vpk);
-                                        vp.setFaculdade(u.getFaculdade());
+                                        vp.setFaculdade(f);
                                         vp.setQtd(0);
                                         csimpm.Saves(vp);
                                     }
-                                    eq = EventQueues.lookup("valid" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                    eq = EventQueues.lookup("valid" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                     eq.publish(new Event("onPedidoMatD", null, vp));
                                 }//
-                                eq = EventQueues.lookup("rinscD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                eq = EventQueues.lookup("rinscD" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMatD", null, i));
                                 eq = EventQueues.lookup("rinscD" + i.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMatD", null, i));
@@ -1492,9 +1497,10 @@ public class PedidoInscricaoController2 extends GenericForwardComposer {
 
     //Pesquisar estudante
     public ListModel<Curso> getListaCursoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        par.put("fac", f);
         List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
         return listaCursoModel = new ListModelList<Curso>(lc);
     }
@@ -1585,9 +1591,10 @@ public class PedidoInscricaoController2 extends GenericForwardComposer {
         List<Inscricao> li = null;
         par.clear();
         par.put("user", usr.getUtilizador());
-        Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+        //Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        par.put("fac",f);
         li = csimpm.findByJPQueryFilter("from Inscricao i where i.idEstudante.cursocurrente.faculdade = :fac and (i.modoInscricao>6 or i.modoInscricao=3) and i.dataConfirmacao is null order by i.dataInscricao asc", par, i, j);
 
         final Iterator<Inscricao> items = li.iterator();

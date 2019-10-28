@@ -8,6 +8,7 @@ package esira.controller;
 //import facade.exceptions.NonexistentEntityException;
 //import facade.exceptions.RollbackFailureException;
 import esira.dao.ConnectionFactory;
+import esira.domain.Faculdade;
 import esira.domain.Grupo;
 import esira.domain.Item;
 import esira.domain.Roles;
@@ -30,6 +31,7 @@ import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Session;
 import org.zkoss.zk.ui.Sessions;
+import org.zkoss.zk.ui.event.EventQueues;
 import org.zkoss.zk.ui.select.SelectorComposer;
 import org.zkoss.zk.ui.select.annotation.Listen;
 import org.zkoss.zk.ui.select.annotation.Wire;
@@ -38,6 +40,8 @@ import org.zkoss.zul.Button;
 import org.zkoss.zul.Combobox;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.ListModelList;
+import org.zkoss.zul.Listbox;
+import org.zkoss.zul.Listitem;
 import org.zkoss.zul.Messagebox;
 import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Window;
@@ -76,6 +80,8 @@ public class LoginController extends SelectorComposer<Component> {
     Combobox cbgrupo;
     @Wire
     Label user;
+    @Wire
+    Combobox cfac;
 
     @Override
     public void doAfterCompose(Component comp) throws Exception {
@@ -137,17 +143,21 @@ public class LoginController extends SelectorComposer<Component> {
     @Listen("onClick=#user")
     public void doMinhaConta() {
         conta.setVisible(!conta.isVisible());
-         if(conta.isVisible())conta.setTop("20px");
+        if (conta.isVisible()) {
+            conta.setTop("20px");
+        }
         if (((Combobox) conta.getFellow("cbgrupo")).getItemCount() == 0) {
             Users u = csimp.get(Users.class, user.getValue());
             List<Grupo> lg = u.getGrupoList();
             String g = u.getIdGrupo().getIdGrupo();
-            for(int i = 0; i<lg.size();i++){
-               if(lg.get(i).getIdGrupo().equals(g))lg.remove(i);
+            for (int i = 0; i < lg.size(); i++) {
+                if (lg.get(i).getIdGrupo().equals(g)) {
+                    lg.remove(i);
+                }
             }
             lg.add(0, u.getIdGrupo());
             ((Combobox) conta.getFellow("cbgrupo")).setModel(new ListModelList(new ArrayList<Grupo>(lg)));
-           
+
         }
     }
 
@@ -194,6 +204,38 @@ public class LoginController extends SelectorComposer<Component> {
         sess.removeAttribute("userCredential");
         Sessions.getCurrent().invalidate();
         Executions.sendRedirect("/");
+    }
+
+    @Listen("onAfterRender=#cfac")
+    public void onSFpermissao() {
+        if (cfac.getModel() != null && cfac.getModel().getSize() > 0) {
+            Object o = Sessions.getCurrent().getAttribute("indexf");
+            if (o != null) {
+                cfac.setSelectedIndex((int) o);
+            } else {
+                cfac.setSelectedIndex(0);
+            }
+        }
+    }
+
+    @Listen("onSelect=#cfac")
+    public void onSCfac() {
+        if (cfac.getSelectedItem() != null) {
+            Sessions.getCurrent().setAttribute("indexf", cfac.getSelectedIndex());
+            Users usr = (Users) Sessions.getCurrent().getAttribute("user");
+            usr.setFaculdade((Faculdade)cfac.getSelectedItem().getValue());
+           // String usr = SecurityContextHolder.getContext().getAuthentication().getName();
+            user.setValue(usr.getUtilizador());// + " - " + ((Faculdade) cfac.getSelectedItem().getValue()).getAbreviatura());
+            Executions.getCurrent().sendRedirect("/index.zul#" + ((Listbox) conta.getParent().getParent().getParent().getParent().getFellow("itemList")).getSelectedItem().getId());//_selected.getId());
+            // Messagebox.show(((Listbox)conta.getParent().getParent().getParent().getParent().getFellow("itemList")).getSelectedItem().getId());
+////////            Listbox lb = ((Listbox)conta.getParent().getParent().getParent().getParent().getFellow("itemList"));
+////////            Listitem li = lb.getSelectedItem();//.getId();
+////////            lb.setSelectedItem(lb.getItems().get(0));
+////////            lb.invalidate();
+////////            lb.setSelectedItem(li);
+////           // xcontents.setSrc(((esira.webapp.Item) item.getValue()).getFile());
+            // .setselec.getSelectedItem().getId());
+        }
     }
 
 }

@@ -111,15 +111,17 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
     Map<String, Object> cbparf = new HashMap<String, Object>();
     Map<String, Object> cbpare = new HashMap<String, Object>();
     private int indcf = -1, indce = -1;
-    Users u = null;
+    // Users u = null;
 
     @Override
     public void doAfterCompose(Component comp) throws Exception {
         super.doAfterCompose(comp);
         condpar.clear();
-        condfac = " and u.faculdade = :fac ";
-        u= csimp.get(Users.class, usr.getUtilizador());
-        condpar.put("fac", u.getFaculdade());
+        // condfac = " and u.faculdade = :fac ";
+        condfac = " and u.faculdade is null";
+        //u = csimp.get(Users.class, usr.getUtilizador());
+//        Faculdade f = csimp.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+//        condpar.put("fac", f);
         setLB(0, 20);
         if (posce != null) {
             posce.setValue(0);
@@ -141,7 +143,12 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
 //        return userModel;
 //    }
     public ListModel<Faculdade> getFacModel() {
-        return new ListModelList<Faculdade>(csimp.getAll(Faculdade.class));
+        List<Faculdade> lf = lf = new ArrayList<Faculdade>();
+        Faculdade f = new Faculdade();
+        f.setDesricao("-----Todas Faculdades----");
+        lf.add(f);
+        lf.addAll(csimp.getAll(Faculdade.class));
+        return new ListModelList<Faculdade>(lf);
     }
 
     public ListModelList<Grupo> getGrupoModel() {
@@ -160,12 +167,21 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
         mDialogAddUser.setParent(windowUser);
         mDialogAddUser.setTitle("Adicionar Utilizador");
         ((Row) mDialogAddUser.getFellow("row1user")).setVisible(true);
+        ((Row) mDialogAddUser.getFellow("f1")).setVisible(false);
+        ((Row) mDialogAddUser.getFellow("f2")).setVisible(false);
+        ((Row) mDialogAddUser.getFellow("f3")).setVisible(false);
+        ((Row) mDialogAddUser.getFellow("f4")).setVisible(false);
+        ((Row) mDialogAddUser.getFellow("f5")).setVisible(false);
+        ((Row) mDialogAddUser.getFellow("f6")).setVisible(false);
+        ((Row) mDialogAddUser.getFellow("f7")).setVisible(false);
+        ((Row) mDialogAddUser.getFellow("f8")).setVisible(false);
+        ((Row) mDialogAddUser.getFellow("f9")).setVisible(false);
         Listbox lb = (Listbox) mDialogAddUser.getFellow("lbgrupo");
         lb.setModel(new ListModelList(new ArrayList<Grupo>()));
         ((Combobox) mDialogAddUser.getFellow("cbgrupos")).setValue("------------ Grupo -----------");
         ((Combobox) mDialogAddUser.getFellow("cbfac")).setValue("------------ Faculdade -----------");
-        Curso c = (Curso)((Combobox) mDialogAddUser.getFellow("cbcurso2")).getSelectedItem().getValue();
-        ((Combobox) mDialogAddUser.getFellow("cbplanoU")).setValue(c.getPlanoc()+"");
+        Curso c = (Curso) ((Combobox) mDialogAddUser.getFellow("cbcurso2")).getSelectedItem().getValue();
+        ((Combobox) mDialogAddUser.getFellow("cbplanoU")).setValue(c.getPlanoc() + "");
         mDialogAddUser.doModal();
     }
 
@@ -202,7 +218,7 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
         }
     }
 
-    public void onClick$saveUser() throws IOException {
+    public void onSaveUser() throws IOException {
         Estudante e = null;
         Endereco end1 = null;
         Enderecof end2 = null;
@@ -274,8 +290,12 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
                     cbfac.setText("");
                     cbfac.getText();
                 }
-                user.setFaculdade((Faculdade) cbfac.getSelectedItem().getValue());
-                user.setTenant(u.getTenant());
+                if (cbfac.getSelectedIndex() == 0) {
+                    user.setFaculdade(null);
+                } else {
+                    user.setFaculdade((Faculdade) cbfac.getSelectedItem().getValue());
+                }
+                user.setTenant(usr.getTenant());
                 if (rf.isChecked()) {
                     user.setUestudante(false);
                 } else {
@@ -304,23 +324,20 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
                         user.setIdEstudante(e);
                     }
                     user.setIdGrupo((Grupo) lbgrupo.getItems().get(0).getValue());
-                    csimp.Save(user);
+//                    csimp.Save(user);
                     Grupo g;
-                    Iterator<Listitem> items1 = lbgrupo.getItems().iterator();
-                    while (items1.hasNext()) {
-                        g = (Grupo) items1.next().getValue();
-                        if (g.getUsersList() == null) {
-                            List<Users> lu = new ArrayList<Users>();
-                            lu.add(user);
+                    if (lbgrupo.getItemCount() > 1) {
+                        Iterator<Listitem> items1 = lbgrupo.getItems().iterator();
+                        if (user.getGrupoList() == null) {
+                            user.setGrupoList(new ArrayList<Grupo>());
+                        }
+                        while (items1.hasNext()) {
+                            g = (Grupo) items1.next().getValue();
                             g = csimp.get(Grupo.class, g.getIdGrupo());
-                            g.setUsersList(lu);
-                            csimp.update(user);
-                        } else {
-                            g = csimp.get(Grupo.class, g.getIdGrupo());
-                            g.getUsersList().add(user);
-                            csimp.update(user);
+                            user.getGrupoList().add(g);
                         }
                     }
+                    csimp.Save(user);
                     ((ListModelList) lbUser.getModel()).add(user);
                     Clients.showNotification("Uma conta para" + user.getNome() + " adicionado com sucesso", null, null, null, 2000);
                 } else {
@@ -390,7 +407,7 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
                     u.setIdFuncionario(user.getIdFuncionario());
                 }
                 ((ListModelList) lbUser.getModel()).remove(user);
-                
+
                 u.setUtilizador(txtAccount.getValue());
                 u.setEmail(txtEmail.getValue());
                 u.setPasword(txtPassConfirm.getValue());
@@ -403,8 +420,12 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
                     cbfac.setText("");
                     cbfac.getText();
                 }
-                u.setFaculdade((Faculdade) cbfac.getSelectedItem().getValue());
-                u.setTenant(u.getTenant());
+                if (cbfac.getSelectedIndex() == 0) {
+                    user.setFaculdade(null);
+                } else {
+                    user.setFaculdade((Faculdade) cbfac.getSelectedItem().getValue());
+                }
+                u.setTenant(usr.getTenant());
 //                if (rf.isChecked()) {
 //                    u.setUestudante(false);
 //                } else {
@@ -496,24 +517,23 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
                         }
                     }
                 }
-                csimp.delete(user);
-                csimp.Save(u);
+
+                //csimp.Save(u);
                 Grupo g;
-                Iterator<Listitem> items1 = lbgrupo.getItems().iterator();
-                while (items1.hasNext()) {
-                    g = (Grupo) items1.next().getValue();
-                    if (g.getUsersList() == null) {
-                        List<Users> lu = new ArrayList<Users>();
-                        lu.add(u);
+                if (lbgrupo.getItemCount() > 1) {
+                    Iterator<Listitem> items1 = lbgrupo.getItems().iterator();
+                    if (u.getGrupoList() == null) {
+                        u.setGrupoList(new ArrayList<Grupo>());
+                    }
+                    while (items1.hasNext()) {
+                        g = (Grupo) items1.next().getValue();
                         g = csimp.get(Grupo.class, g.getIdGrupo());
-                        g.setUsersList(lu);
-                        csimp.update(u);
-                    } else {
-                        g = csimp.get(Grupo.class, g.getIdGrupo());
-                        g.getUsersList().add(u);
-                        csimp.update(u);
+                        user.getGrupoList().remove(g);
+                        u.getGrupoList().add(g);
                     }
                 }
+                csimp.delete(user);
+                csimp.Save(u);
                 ((ListModelList) lbUser.getModel()).add(u);
                 Clients.showNotification("Credenciais de" + u.getNome() + " modificado com sucesso", null, null, null, 2000);
             }
@@ -541,8 +561,8 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
             par.put("c", cu);
             List<Planocurricular> lc = csimp.findByJPQuery("from Planocurricular p where p.curso = :c order by p.planocurricularPK.ano desc", par);
             cbplanoU.setModel(new ListModelList<Planocurricular>(lc));
-          //  Comboitem cbt1 = cbplanoU.getItems().get(0);
-          //  cbplanoU.setSelectedItem(cbt1);
+            //  Comboitem cbt1 = cbplanoU.getItems().get(0);
+            //  cbplanoU.setSelectedItem(cbt1);
         }
     }
 
@@ -554,6 +574,7 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
         mDialogAddUser.setParent(windowUser);
         mDialogAddUser.setTitle("Editar Utilizador " + user.getNome());
         mDialogAddUser.doModal();
+        Faculdade f = user.getFaculdade();
         if (user.getUestudante()) {
             ((Row) mDialogAddUser.getFellow("f1")).setVisible(true);
             ((Row) mDialogAddUser.getFellow("f2")).setVisible(true);
@@ -603,9 +624,9 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
                         break;
                     }
                 }
-            }else{
-               ((Combobox) mDialogAddUser.getFellow("cbplanoU")).setText(planoe + "");
-            }            
+            } else {
+                ((Combobox) mDialogAddUser.getFellow("cbplanoU")).setText(planoe + "");
+            }
             Combobox cbt = (Combobox) mDialogAddUser.getFellow("cbTurnoU");
             Comboitem cbt1 = cbt.getItems().get(0);
             Comboitem cbt2 = cbt.getItems().get(1);
@@ -626,7 +647,7 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
             ((Row) mDialogAddUser.getFellow("f6")).setVisible(false);
             ((Row) mDialogAddUser.getFellow("f7")).setVisible(false);
             ((Row) mDialogAddUser.getFellow("f8")).setVisible(false);
-            ((Row) mDialogAddUser.getFellow("f9")).setVisible(true);
+            ((Row) mDialogAddUser.getFellow("f9")).setVisible(false);
         }
         ((Row) mDialogAddUser.getFellow("row1user")).setVisible(false);
         ((Textbox) mDialogAddUser.getFellow("txtAccount")).setText(user.getUtilizador());
@@ -667,13 +688,16 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
 //                break;
 //            }
 //        }
-         final Iterator<Comboitem> items2 = new ArrayList(((Combobox) mDialogAddUser.getFellow("cbfac")).getItems()).listIterator();
-        Comboitem cit2 = null;
-        while (items2.hasNext()) {
-            cit2 = items2.next();
-            if (((Faculdade) cit2.getValue()).getIdFaculdade().equals(user.getFaculdade().getIdFaculdade())) {
-                ((Combobox) mDialogAddUser.getFellow("cbfac")).setSelectedItem(cit2);
-                break;
+        if (f != null) {
+            final Iterator<Comboitem> items2 = new ArrayList(((Combobox) mDialogAddUser.getFellow("cbfac")).getItems()).listIterator();
+            Comboitem cit2 = null;
+            items2.next();
+            while (items2.hasNext()) {
+                cit2 = items2.next();
+                if (((Faculdade) cit2.getValue()).getIdFaculdade().equals(f.getIdFaculdade())) {
+                    ((Combobox) mDialogAddUser.getFellow("cbfac")).setSelectedItem(cit2);
+                    break;
+                }
             }
         }
         Listbox grup = ((Listbox) mDialogAddUser.getFellow("lbgrupo"));
@@ -688,7 +712,7 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
         if (li != null) {
             grup.setModel(new ListModelList<Grupo>(li));
         }
-       
+
     }
 
     private void clearFormAddUser() {
@@ -697,7 +721,7 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
         cbfunc.setConstraint(c);
         txtPass.setConstraint(c);
         txtPassConfirm.setConstraint(c);
-       // cbgrupos.setConstraint(c);
+        // cbgrupos.setConstraint(c);
         cbfac.setConstraint(c);
         txtAccount.setValue("");
         cbfunc.setSelectedIndex(-1);
@@ -713,7 +737,7 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
         cbfunc.setConstraint(" no Empty: Insira um nome ou seleccione um existente!");
         txtPass.setConstraint(" no Empty: palavra-passe!");
         txtPassConfirm.setConstraint(" no Empty: confirmar a palavra-passe!");
-     //   cbgrupos.setConstraint(" no Empty:Seleccione um Grupo de utilizador!");
+        //   cbgrupos.setConstraint(" no Empty:Seleccione um Grupo de utilizador!");
         cbfac.setConstraint(" no Empty:Seleccione uma Faculdade!");
     }
 
@@ -748,19 +772,30 @@ public class ProfileCreateUsersController extends GenericForwardComposer {
     }
 
     public ListModel<Faculdade> getListFacModel() {
-        List<Faculdade> lf = csimp.getAll(Faculdade.class);
+        List<Faculdade> lf = new ArrayList<Faculdade>();
+        Faculdade f = new Faculdade();
+        f.setDesricao("-----Reitoria----");
+        lf.add(f);
+        lf.addAll(csimp.getAll(Faculdade.class));
         return new ListModelList<Faculdade>(lf);
     }
 
     ////////////////////////////////////PESQUISAS//////////////////////////////////////////////////////
     public void onChange$cbfaculdade() {
         if (cbfaculdade.getSelectedItem() != null) {
-            condfac = " and u.faculdade = :fac";
-            Faculdade f = (Faculdade) cbfaculdade.getSelectedItem().getValue();
-            if (condpar.containsKey("fac")) {
-                condpar.replace("fac", f);
+            if (cbfaculdade.getSelectedIndex() == 0) {
+                condfac = " and u.faculdade is null";
+                if (condpar.containsKey("fac")) {
+                    condpar.remove("fac");
+                }
             } else {
-                condpar.put("fac", f);
+                condfac = " and u.faculdade = :fac";
+                Faculdade f = (Faculdade) cbfaculdade.getSelectedItem().getValue();
+                if (condpar.containsKey("fac")) {
+                    condpar.replace("fac", f);
+                } else {
+                    condpar.put("fac", f);
+                }
             }
         }
         setLB(0, 20);

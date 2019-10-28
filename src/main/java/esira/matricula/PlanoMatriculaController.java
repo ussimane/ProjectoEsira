@@ -4,6 +4,7 @@
  */
 package esira.matricula;
 
+import esira.domain.Faculdade;
 import esira.domain.Listaadmissao;
 import esira.domain.Matricula;
 import esira.domain.PlanificacaoAnoLectivo;
@@ -101,8 +102,9 @@ public class PlanoMatriculaController extends GenericForwardComposer {
     @Override
     public void doAfterCompose(Component comp) throws Exception {
         super.doAfterCompose(comp);
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
-        par.put("fac", u.getFaculdade());
+       // Users u = csimpm.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         PlanificacaoAnoLectivo pa = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo p where p.faculdade = :fac", par);
         if (pa != null) {
             addPlano.setVisible(false);
@@ -241,9 +243,10 @@ public class PlanoMatriculaController extends GenericForwardComposer {
     }
 
     public ListModel<PlanificacaoAnoLectivo> getPlanosmatricula() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+       // Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         PlanificacaoAnoLectivo p = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo p where p.faculdade = :fac", par);
         List<PlanificacaoAnoLectivo> pa = new ArrayList<>();
         pa.add(p);

@@ -64,7 +64,10 @@ public class Users implements Serializable {
     @JoinColumn(name = "id_grupo", referencedColumnName = "id_grupo")
     @ManyToOne(fetch = FetchType.LAZY)
     private Grupo idGrupo;
-    @ManyToMany(mappedBy = "usersList", fetch = FetchType.LAZY)
+    @JoinTable(name = "usergrupo", joinColumns = {
+        @JoinColumn(name = "utilizador", referencedColumnName = "utilizador", nullable = false)}, inverseJoinColumns = {
+        @JoinColumn(name = "id_grupo", referencedColumnName = "id_grupo", nullable = false)})
+    @ManyToMany(fetch = FetchType.LAZY)
     private List<Grupo> grupoList;
     @Column(name = "tenant", length = 45)
     private String tenant;

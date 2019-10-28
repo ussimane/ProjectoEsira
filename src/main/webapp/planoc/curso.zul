@@ -17,13 +17,25 @@
             <!--<toolbar >-->
             <div align="left" sclass="row-custimized criteriaPadEiditMatr" >
                 <hbox >
-                    <button autodisable="self" id="addCurso" label="Adicionar" mold="trendy" height="20px"/>
+                    <button autodisable="self" id="addCurso" label="Adicionar" mold="trendy" height="20px"/>            
                 </hbox>
             </div>
             <div width="98%" sclass="row-custimized criteriaPad button-blue">
+                
+                <hlayout   id="ahead">
+                    <image  src="/icon/search.png"/>
+                    <combobox id="cbfaculdade" forward="onSelect=onSelectcbfaculdadeCurso" visible="false"  hflex="1"   readonly="true">
+                        <attribute name="onAfterRender"><![CDATA[
+                            if((self.getModel()!=null) && self.getModel().getSize()>0){
+                               self.setSelectedIndex(0);
+                            }                           
+                        ]]></attribute>
+                        <comboitem label="${each}"/>
+                    </combobox>   
+                </hlayout>
                 <listbox  id="lbCurso"
-                         sizedByContent="true" 
-                         emptyMessage="Sem conteudo" span="true" autopaging="true" model="${$composer.cursoModel}" >
+                          sizedByContent="true" 
+                          emptyMessage="Sem conteudo" span="true" autopaging="true" model="${$composer.cursoModel}" >
                     
                     <listhead>
                         <listheader label="codigoCurso"/>

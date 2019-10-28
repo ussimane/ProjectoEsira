@@ -120,8 +120,8 @@ public class DocenteDiscController extends GenericForwardComposer {
     public ListModel<Curso> getCursoModel() {
         // return cursoModel;
         Map<String, Object> par = new HashMap<>();
-        par.put("idf", usr.getUtilizador());
-        Faculdade f = ((Users) csimp.findByJPQuery("from Users u where u.utilizador = :idf", par).get(0)).getFaculdade();
+       // par.put("idf", usr.getUtilizador());
+        Faculdade f = csimp.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());//((Users) csimp.findByJPQuery("from Users u where u.utilizador = :idf", par).get(0)).getFaculdade();
         return new ListModelList<Curso>(f.getCursoList());
     }
 
@@ -129,8 +129,8 @@ public class DocenteDiscController extends GenericForwardComposer {
     public ListModel<Disciplina> getDiscipModel() {
         //return disciplinaModel;
         Map<String, Object> par = new HashMap<>();
-        par.put("idf", usr.getUtilizador());
-        Faculdade f = ((Users) csimp.findByJPQuery("from Users u where u.utilizador = :idf", par).get(0)).getFaculdade();
+        //par.put("idf", usr.getUtilizador());
+        Faculdade f = csimp.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());//((Users) csimp.findByJPQuery("from Users u where u.utilizador = :idf", par).get(0)).getFaculdade();
         par.clear();
         par.put("idf", f);
         List<Disciplina> disc = csimp.findByJPQuery("from Disciplina d where d.curso.faculdade = :idf", par);
@@ -194,9 +194,10 @@ public class DocenteDiscController extends GenericForwardComposer {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////
     public ListModel<Curso> getListaCursoModel() {
-        Users u = csimp.get(Users.class, usr.getUtilizador());
-        par.clear();
-        par.put("fac", u.getFaculdade());
+//        Users u = csimp.get(Users.class, usr.getUtilizador());
+//        par.clear();
+        Faculdade f = csimp.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Curso> lc = csimp.findByJPQuery("from Curso c where c.faculdade = :fac", par);
         return new ListModelList<Curso>(lc);
     }

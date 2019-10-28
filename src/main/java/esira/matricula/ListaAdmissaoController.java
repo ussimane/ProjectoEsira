@@ -107,7 +107,7 @@ public class ListaAdmissaoController extends GenericForwardComposer {
     Window mDialogAddLista, winmain, win, mDialogMatricula;
     Button addList, guardarLista;
     Button cancelarLista;
-    Combobox cbCurso, cbTipoAdm, cbProcuracurso, cbTurnoA;
+    Combobox cbCurso, cbTipoAdm, cbProcuracurso, cbTurnoA,cbfaculdade;
     Textbox txNome, txBI, txPbi, txCont, txPnome, txNumero;
     private Intbox ibidaluno, litem;
     List listaM = csimpm.getAll(Listaadmissao.class);
@@ -128,7 +128,7 @@ public class ListaAdmissaoController extends GenericForwardComposer {
     private Button btv;
     private EventQueue eq;
 
-    @Init
+  //  @Init
     @Override
     public void doAfterCompose(Component comp) throws Exception {
         super.doAfterCompose(comp);
@@ -140,19 +140,47 @@ public class ListaAdmissaoController extends GenericForwardComposer {
 //        }
         condpar.clear();
         condcurso = " and la.curso.faculdade = :fac ";
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
-        condpar.put("fac", u.getFaculdade());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        if(usr.getFaculdade().getLocalizacao()==null){
+            cbfaculdade.setVisible(true);
+            cbfaculdade.setModel(getFaculdadeModel());
+          }
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        condpar.put("fac", f);
         setLB(0, 20);
 
     }
+    
+    public ListModel<Faculdade> getFaculdadeModel() {
+        List<Faculdade> faculdades = csimpm.getAll(Faculdade.class);
+        return new ListModelList<Faculdade>(faculdades);
+    }
+    
+    public void onSelectcbfaculdadeCurso() {
+        if (cbfaculdade.getSelectedItem() != null) {
+            Faculdade f = cbfaculdade.getSelectedItem().getValue();
+            f = csimpm.get(Faculdade.class, f.getIdFaculdade());
+            cbcurso.setModel(new ListModelList<Curso>(f.getCursoList()));
+            condcurso = " and la.curso.faculdade = :fac ";
+            if (condpar.containsKey("curso")) {
+                condpar.remove("curso");
+            }
+            if (condpar.containsKey("fac")) {
+                condpar.replace("fac", f);
+            } else {
+                condpar.put("fac", f);
+            }
+            setLB(0, 20);
+        }
+    }
 
     public void onSetQueueLadm() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
-        eq = EventQueues.lookup("ladm" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        eq = EventQueues.lookup("ladm" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEvento());
-        eq = EventQueues.lookup("uladm" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        eq = EventQueues.lookup("uladm" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEvento2());
-        eq = EventQueues.lookup("rladm" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        eq = EventQueues.lookup("rladm" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEvento3());
     }
 
@@ -309,20 +337,22 @@ public class ListaAdmissaoController extends GenericForwardComposer {
     public ListModel<Listaadmissao> getListAmitModel() {
         par.clear();
         par.put("user", usr.getUtilizador());
-        Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+        // Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Listaadmissao> la = csimpm.findByJPQuery("from Listaadmissao la where"
                 + " la.curso.faculdade = :fac", par);
         return new ListModelList<Listaadmissao>(la);
     }
 
     public ListModel<Curso> getListCursoPModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         Curso c = new Curso();
-        c.setDescricao("----- Curso -----");
+        c.setDescricao("-----Todos cursos-----");
         List<Curso> lc = new ArrayList<Curso>();
         lc.add(c);
         List<Curso> lc2 = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
@@ -331,10 +361,16 @@ public class ListaAdmissaoController extends GenericForwardComposer {
     }
 
     public ListModel<Curso> getListCursoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
-        List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
+        List<Curso> lc=null;
+        if (usr.getFaculdade().getLocalizacao() != null) {
+            Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+            par.put("fac", f);
+            lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
+        } else {
+            lc = csimpm.getAll(Curso.class);
+        }
         return new ListModelList<Curso>(lc);
     }
 
@@ -1389,8 +1425,9 @@ public class ListaAdmissaoController extends GenericForwardComposer {
         } else {
             condpar.remove("curso");
             condcurso = " and la.curso.faculdade = :fac ";
-            Users u = csimpm.get(Users.class, usr.getUtilizador());
-            condpar.put("fac", u.getFaculdade());
+            //Users u = csimpm.get(Users.class, usr.getUtilizador());
+            Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+            condpar.put("fac", f);
         }
         setLB(0, 20);
     }

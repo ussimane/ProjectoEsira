@@ -124,10 +124,10 @@ public class PedidosMatriculaController2 extends GenericForwardComposer {
     }
 
     public void onSetQueueMat() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
-        eq = EventQueues.lookup("pmatD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+      //  Users u = csimpm.get(Users.class, usr.getUtilizador());
+        eq = EventQueues.lookup("pmatD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEvento());
-        eq = EventQueues.lookup("rmatD" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        eq = EventQueues.lookup("rmatD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEvento2());
     }
 
@@ -177,9 +177,10 @@ public class PedidosMatriculaController2 extends GenericForwardComposer {
         Calendar c = Calendar.getInstance();
         par.clear();
         par.put("user", usr.getUtilizador());
-        Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+        //Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         listaM = csimpm.findByJPQuery("from Matricula m where m.curso.faculdade = :fac and m.confirmacao is null and m.matriculaPK not in (select ma.matriculaPK from "
                 + "Matriculaanulada ma)", par);
         return listEstudanteModel = new ListModelList<Matricula>(listaM);
@@ -600,10 +601,11 @@ public class PedidosMatriculaController2 extends GenericForwardComposer {
 
     //Pesquisar estudante
     public ListModel<Curso> getListaCursoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+       // Users u = csimpm.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.clear();
-         if (u.getFaculdade() != null) {
-            par.put("fac", u.getFaculdade());
+         if (f != null) {
+            par.put("fac", f);
             List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
             return listaCursoModel = new ListModelList<Curso>(lc);
         } else{
@@ -698,9 +700,10 @@ public class PedidosMatriculaController2 extends GenericForwardComposer {
         Calendar c = Calendar.getInstance();
         par.clear();
         par.put("user", usr.getUtilizador());
-        Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+       // Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         listaM = csimpm.findByJPQueryFilter("from Matricula m where m.curso.faculdade = :fac and m.confirmacao is null and m.modoMatricula = 3 and m.matriculaPK not in (select ma.matriculaPK from "
                 + "Matriculaanulada ma)", par, i, j);
 

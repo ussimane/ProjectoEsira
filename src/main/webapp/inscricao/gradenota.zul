@@ -33,7 +33,12 @@
               
                 <intbox hflex="1" width="98%" tooltiptext="Ano Lectivo" id="ibProcAno" />
                     
-                <combobox id="cbcurso"  hflex="1" width="98%" readonly="true"  onAfterRender="self.setSelectedIndex(0)" model="${$composer.listaCursoModel}">
+                <combobox id="cbcurso"  hflex="1" width="98%" readonly="true" model="${$composer.listaCursoModel}">
+                    <attribute name="onAfterRender"><![CDATA[
+                            if((self.getModel()!=null) && self.getModel().getSize()>0){
+                               self.setSelectedIndex(0);
+                            }                           
+                        ]]></attribute> 
                     <comboitem label="${each}"/>
                 </combobox>
                 <button style="padding: 0;" tooltiptext="Filtrar" image="/icon/opcao.png" popup="popup, type=toggle, position=after_start" />

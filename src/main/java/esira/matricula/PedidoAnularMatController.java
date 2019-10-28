@@ -7,6 +7,7 @@ package esira.matricula;
 import esira.domain.Curso;
 import esira.domain.Disciplinaanulada;
 import esira.domain.Estudante;
+import esira.domain.Faculdade;
 import esira.domain.Inscricao;
 import esira.domain.Inscricaodisciplina;
 import esira.domain.Matricula;
@@ -84,9 +85,10 @@ public class PedidoAnularMatController extends GenericForwardComposer {
     }
 
     public ListModel<Matriculaanulada> getPedidoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+       // Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Matriculaanulada> lda = csimpm.findByJPQuery("from Matriculaanulada ma where ma.dataconfirmacao is null and ma.matricula.curso.faculdade = :fac", par);
         return new ListModelList<Matriculaanulada>(lda);
     }
@@ -229,6 +231,7 @@ public class PedidoAnularMatController extends GenericForwardComposer {
     public void anular(Matriculaanulada ma, List<Inscricaodisciplina> lid) {
         ma.setDataconfirmacao(new Date());
         Users u = csimpm.get(Users.class, usr.getUtilizador());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         ma.setFuncionario(u.getIdFuncionario());
         Matricula man = ma.getMatricula();
         man.setAnulada(true);
@@ -252,7 +255,7 @@ public class PedidoAnularMatController extends GenericForwardComposer {
                 idis.setAnulacao(da);
                 csimpm.update(idis);
             }
-            eq = EventQueues.lookup("anula" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+            eq = EventQueues.lookup("anula" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
             eq.publish(new Event("onPedidoMat", null, lid.get(0).getInscricao()));
             eq = EventQueues.lookup("anula" + da.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
             eq.publish(new Event("onPedidoMat", null, lid.get(0).getInscricao()));
@@ -260,7 +263,7 @@ public class PedidoAnularMatController extends GenericForwardComposer {
         Clients.showNotification("A Anulação de Matricula foi validada com Sucesso", null, null, null, 2000);
 //        new Listbox().appendChild(((Listbox) winAnularM.getParent().getFellow("lbPAnulMat"))
 //                .getItemAtIndex(idlitem.getValue()));
-        eq = EventQueues.lookup("rmatA" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        eq = EventQueues.lookup("rmatA" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.publish(new Event("onPedidoMatD", null, da));
         eq = EventQueues.lookup("rmatA" + da.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
         eq.publish(new Event("onPedidoMatD", null, da));
@@ -299,12 +302,13 @@ public class PedidoAnularMatController extends GenericForwardComposer {
                                 ma.setMotivo(txMotivoR.getValue());
                                 ma.setDataconfirmacao(new Date());
                                 Users u = csimpm.get(Users.class, usr.getUtilizador());
+                                Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
                                 ma.setFuncionario(u.getIdFuncionario());
                                 csimpm.update(ma);
                                 Clients.showNotification("Pedido de Anulação de Matricula Rejeitado com Sucesso", null, null, null, 2000);
 //                                new Listbox().appendChild(((Listbox) winAddMotivoPM.getParent().getParent().getFellow("lbPAnulMat"))
 //                                        .getItemAtIndex(((Intbox) winAddMotivoPM.getParent().getFellow("idlitem")).getValue()));
-                                eq = EventQueues.lookup("rmatA" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                eq = EventQueues.lookup("rmatA" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMatD", null, ma));
                                 eq = EventQueues.lookup("rmatA" + ma.getMatricula().getEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMatD", null, ma));

@@ -65,8 +65,18 @@
                 </hbox>
                 <hbox  id="autent" style="align:center" apply="esira.controller.LoginController" 
                        hflex="min" vflex="min" pack="end" align="end" >
+                    <vbox>
+                    <hbox>
                     <image src="/img/profile.png" width="20px" height="20px"/>
                     <label id="user" sclass="loguser" if="${not sessionScope.userCredential.anonymous}"/>
+                    </hbox>
+                    <combobox visible="false" buttonVisible="false" onClick="self.open()" forward="onAfterRender=onSFpermissao;onSelect=onSCfac"
+                                      readonly="true" id="cfac" constraint=" no Empty:Seleccione uma Faculdade!">
+                                <template name="model">
+                                    <comboitem label="${each}"/>
+                                </template>
+                    </combobox>
+                    </vbox>
                     <window apply="esira.controller.LoginController" id="conta" mode="overlapped" position="right,top"  visible="false" width="200px" >
                         <vbox  width="100%" height="50px" pack="center" align="center">
                             <label id="unome" value="" style="font-size:15px;color:blue"/>

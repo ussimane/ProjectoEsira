@@ -13,6 +13,7 @@ import esira.domain.Curso;
 import esira.domain.Disciplina;
 import esira.domain.Disciplinaanulada;
 import esira.domain.Estudante;
+import esira.domain.Faculdade;
 import esira.domain.Funcionario;
 import esira.domain.Grupo;
 import esira.domain.Inscricao;
@@ -129,10 +130,10 @@ public class PedidoAnulacaoController extends GenericForwardComposer {
     }
 
     public void onSetQueueA() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
-        eq = EventQueues.lookup("pinscA" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        eq = EventQueues.lookup("pinscA" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEventoA());
-        eq = EventQueues.lookup("rinscA" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+        eq = EventQueues.lookup("rinscA" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEventoRA());
     }
 
@@ -168,9 +169,10 @@ public class PedidoAnulacaoController extends GenericForwardComposer {
     }
 
     public ListModel<Disciplinaanulada> getPedidoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Disciplinaanulada> lda = csimpm.findByJPQuery("from Disciplinaanulada da where da.dataconfirmacao is null and da.idEstudante.cursocurrente.faculdade = :fac", par);
         return new ListModelList<Disciplinaanulada>(lda);
     }
@@ -225,6 +227,7 @@ public class PedidoAnulacaoController extends GenericForwardComposer {
                                 da.setEstado(true);
                                 da.setDataconfirmacao(new Date());
                                 Users u = csimpm.get(Users.class, usr.getUtilizador());
+                                Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
                                 da.setFuncionario(u.getIdFuncionario());
                                 final Iterator<Inscricaodisciplina> items2 = da.getInscricaodisciplinaList().listIterator();
                                 Inscricaodisciplina idis = null;
@@ -237,7 +240,7 @@ public class PedidoAnulacaoController extends GenericForwardComposer {
                                 Clients.showNotification("A Anulação de Inscrição foi validada com Sucesso", null, null, null, 2000);
 //                                new Listbox().appendChild(((Listbox) winVAnulacao.getParent().getFellow("lbpanularInsc"))
 //                                        .getItemAtIndex(idlitem.getValue()));
-                                eq = EventQueues.lookup("rinscA" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                eq = EventQueues.lookup("rinscA" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMatD", null, da));
                                 eq = EventQueues.lookup("rinscA" + da.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMatD", null, da));
@@ -276,6 +279,7 @@ public class PedidoAnulacaoController extends GenericForwardComposer {
                             case Messagebox.YES:
                                 Disciplinaanulada da = csimpm.get(Disciplinaanulada.class, ibidInsc.getValue());
                                 Users u = csimpm.get(Users.class, usr.getUtilizador());
+                                Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
                                 da.setFuncionario(u.getIdFuncionario());
                                 da.setDataconfirmacao(new Date());
                                 da.setEstado(false);
@@ -284,7 +288,7 @@ public class PedidoAnulacaoController extends GenericForwardComposer {
                                 Clients.showNotification("Pedido de Anulação de Inscrição Rejeitado com Sucesso", null, null, null, 2000);
 //                                new Listbox().appendChild(((Listbox) winAddMotivo.getParent().getParent().getFellow("lbpanularInsc"))
 //                                        .getItemAtIndex(((Intbox) winAddMotivo.getParent().getFellow("idlitem")).getValue()));
-                                eq = EventQueues.lookup("rinscA" + u.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
+                                eq = EventQueues.lookup("rinscA" + f.getIdFaculdade(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMatD", null, da));
                                 eq = EventQueues.lookup("rinscA" + da.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
                                 eq.publish(new Event("onPedidoMatD", null, da));

@@ -26,7 +26,20 @@
                     <image src="/icon/search.png"/>
                     <textbox  hflex="1" id="txProcurar" width="98%" ></textbox>
                     <textbox  hflex="1" id="txProcNrmec" width="98%" ></textbox>
-                    <combobox hflex="1" tooltiptext="Curso" id="cbcurso" readonly="true" model="${$composer.listaCursoModel}" forward="onCreate=onCcbcurso" width="98%" >
+                    <combobox id="cbfaculdade" forward="onSelect=onSelectcbfaculdadeDiscip" visible="false"  hflex="1"   readonly="true">
+                        <attribute name="onAfterRender"><![CDATA[
+                            if((self.getModel()!=null) && self.getModel().getSize()>0){
+                               self.setSelectedIndex(0);
+                            }                           
+                        ]]></attribute>
+                        <comboitem label="${each}"/>
+                    </combobox>  
+                    <combobox hflex="1" tooltiptext="Curso" id="cbcurso" readonly="true" model="${$composer.listaCursoModel}" width="98%" >
+                         <attribute name="onAfterRender"><![CDATA[
+                            if((self.getModel()!=null) && self.getModel().getSize()>0){
+                               self.setSelectedIndex(0);
+                            }                           
+                        ]]></attribute>
                         <comboitem label="${each}"/>
                     </combobox>  
                 </hlayout>

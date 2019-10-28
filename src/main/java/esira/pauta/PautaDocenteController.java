@@ -12,6 +12,7 @@ import esira.domain.Curso;
 import esira.domain.Disciplina;
 import esira.domain.Docente;
 import esira.domain.Estudante;
+import esira.domain.Faculdade;
 import esira.domain.Funcionario;
 import esira.domain.Inscricao;
 import esira.domain.Inscricaodisciplina;
@@ -104,16 +105,17 @@ public class PautaDocenteController extends GenericForwardComposer {
         Calendar cal = new GregorianCalendar();
         cal.setTime(dano);
         anoi.setValue(cal.get(Calendar.YEAR));
-        if (cbcurso.getModel() != null) {
+        if (cbcurso.getModel() != null&&cbcurso.getModel().getSize()>0) {
             cbDisc.setModel(new ListModelList<Disciplina>(((Curso) cbcurso.getModel().getElementAt(0)).getDisciplinaList()));
         }
         setLB();
     }
 
     public ListModel<Curso> getCursoModel() {
-        Users u = csimpm.get(Users.class, usr.getUtilizador());
+       //Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        par.put("fac", u.getFaculdade());
+        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+        par.put("fac", f);
         List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
         return new ListModelList<Curso>(lc);
     }

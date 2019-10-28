@@ -329,17 +329,19 @@ public class PlanoCurricularController2 extends GenericForwardComposer {
 //    //............................................................................................................
     public ListModel<Curso> getCursoModel() {
         // return cursoModel;
-        Map<String, Object> par = new HashMap<>();
-        par.put("idf", usr.getUtilizador());
-        Faculdade f = ((Users) csimp.findByJPQuery("from Users u where u.utilizador = :idf", par).get(0)).getFaculdade();
+//        Map<String, Object> par = new HashMap<>();
+//        par.put("idf", usr.getUtilizador());
+//        Faculdade f = ((Users) csimp.findByJPQuery("from Users u where u.utilizador = :idf", par).get(0)).getFaculdade();
+        Faculdade f = csimp.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         return new ListModelList<Curso>(f.getCursoList());
     }
 
     public ListModel<Curso> getCurso2Model() {
         // return cursoModel;
-        Map<String, Object> par = new HashMap<>();
-        par.put("idf", usr.getUtilizador());
-        Faculdade f = ((Users) csimp.findByJPQuery("from Users u where u.utilizador = :idf", par).get(0)).getFaculdade();
+//        Map<String, Object> par = new HashMap<>();
+//        par.put("idf", usr.getUtilizador());
+//        Faculdade f = ((Users) csimp.findByJPQuery("from Users u where u.utilizador = :idf", par).get(0)).getFaculdade();
+      Faculdade f = csimp.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         return new ListModelList<Curso>(f.getCursoList());
     }
 //
