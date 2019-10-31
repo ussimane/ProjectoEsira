@@ -39,6 +39,9 @@
                 <intercept-url pattern="/webresources/*" access="IS_AUTHENTICATED_ANONYMOUSLY" />
                <!-- <intercept-url pattern="/visitante/visitante.zul" access="IS_AUTHENTICATED_ANONYMOUSLY" />-->
 		<intercept-url pattern="/*.zul" access="IS_AUTHENTICATED_REMEMBERED" />
+                <intercept-url pattern="/" access="IS_AUTHENTICATED_REMEMBERED" />
+                <intercept-url pattern="/teste" access="IS_AUTHENTICATED_ANONYMOUSLY" />
+                <intercept-url pattern="/students/all" access="IS_AUTHENTICATED_ANONYMOUSLY" />
 	</http>
 
 	<authentication-manager>

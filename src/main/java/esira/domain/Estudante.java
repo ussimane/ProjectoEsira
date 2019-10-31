@@ -5,6 +5,7 @@
  */
 package esira.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -27,6 +28,8 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+//import org.codehaus.jackson.annotate.JsonIgnore;
+//import org.fasterxml.jackson.annotate.JsonIgnore;
 
 /**
  *
@@ -105,61 +108,110 @@ public class Estudante implements Serializable {
     @Column(name = "ultimamatricula")
     @Temporal(TemporalType.DATE)
     private Date ultimamatricula;
+    
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "estudante", fetch = FetchType.LAZY)
     private Enderecof enderecof;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "idEstudante", fetch = FetchType.LAZY)
     private List<Inscricao> inscricaoList;
+    
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "estudante", fetch = FetchType.LAZY)
     private Documento documento;
+    
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "estudante", fetch = FetchType.LAZY)
     private Ingressobolseiro ingressobolseiro;
+    
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "estudante", fetch = FetchType.LAZY)
     private Ingressotransferencia ingressotransferencia;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "idEstudante", fetch = FetchType.LAZY)
     private List<Arquivoestudante> arquivoestudanteList;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "estudante", fetch = FetchType.LAZY)
     private List<Ingressopercabolsa> ingressopercabolsaList;
+    
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "estudante", fetch = FetchType.LAZY)
     private Endereco endereco;
+    
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "estudante", fetch = FetchType.LAZY)
     private Profissao profissao;
+    
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "estudante", fetch = FetchType.LAZY)
     private Especial especial;
+    
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "estudante", fetch = FetchType.LAZY)
     private Ingressoexameadmissao ingressoexameadmissao;
+    
+    @JsonIgnore
     @OneToMany(mappedBy = "idEstudante", fetch = FetchType.LAZY)
     private List<Users> usersList;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "idEstudante", fetch = FetchType.LAZY)
     private List<Mudancacurso> mudancacursoList;
+    
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "estudante", fetch = FetchType.LAZY)
     private Ingressomudancauniversidade ingressomudancauniversidade;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "estudante", fetch = FetchType.LAZY)
     private List<Matricula> matriculaList;
+   
+    @JsonIgnore
     @OneToMany(mappedBy = "idEstudante", fetch = FetchType.LAZY)
     private List<Listaadmissao> listaadmissaoList;
+    
+   @JsonIgnore
     @OneToMany(mappedBy = "idEstudante", fetch = FetchType.LAZY)
     private List<Disciplinaanulada> disciplinaanuladaList;
+    
+    @JsonIgnore
     @JoinColumn(name = "bolsa", referencedColumnName = "id_bolsa")
     @ManyToOne(fetch = FetchType.LAZY)
     private Bolsa bolsa;
+    
+    @JsonIgnore
     @JoinColumn(name = "cursocurrente", referencedColumnName = "id_curso", nullable = false)
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Curso cursocurrente;
+    
+    @JsonIgnore
     @JoinColumn(name = "cursoingresso", referencedColumnName = "id_curso", nullable = false)
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Curso cursoingresso;
+    
+    @JsonIgnore
     @JoinColumn(name = "estado_civil", referencedColumnName = "id_estado")
     @ManyToOne(fetch = FetchType.LAZY)
     private Estadocivil estadoCivil;
+    
+    @JsonIgnore
     @JoinColumn(name = "escola_pais", referencedColumnName = "id_pais")
     @ManyToOne(fetch = FetchType.LAZY)
     private Pais escolaPais;
+    
+    @JsonIgnore
     @JoinColumn(name = "nacionalidade", referencedColumnName = "id_pais", nullable = false)
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Pais nacionalidade;
+    
+    @JsonIgnore
     @JoinColumn(name = "via_ingresso", referencedColumnName = "id_via_ingresso")
     @ManyToOne(fetch = FetchType.LAZY)
     private Viaingresso viaIngresso;
+    
     @Column(name = "estado")
     private Boolean estado;
     @Column(name = "graduado")
@@ -170,6 +222,7 @@ public class Estudante implements Serializable {
     private Integer turma;
     @Column(name = "planoc")
     private Integer planoc;
+    @JsonIgnore
     @JoinColumn(name = "provincia", referencedColumnName = "id_provincia")
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Provincia provincia;

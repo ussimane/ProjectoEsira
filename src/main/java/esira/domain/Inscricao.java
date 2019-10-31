@@ -5,6 +5,7 @@
  */
 package esira.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -63,16 +64,21 @@ public class Inscricao implements Serializable {
     @JoinColumn(name = "id_estudante", referencedColumnName = "id_estudante", nullable = false)
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Estudante idEstudante;
+    @JsonIgnore
     @JoinColumn(name = "funcionario", referencedColumnName = "id_funcionario")
     @ManyToOne(fetch = FetchType.LAZY)
     private Funcionario funcionario;
+    @JsonIgnore
     @JoinColumn(name = "grupo", referencedColumnName = "idgrupoi")
     @ManyToOne(fetch = FetchType.LAZY)
     private Grupoinscricao grupo;
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "idInscricao", fetch = FetchType.LAZY)
     private List<Arquivoinscricao> arquivoinscricaoList;
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "inscricao", fetch = FetchType.LAZY)
     private List<Inscricaodisciplina> inscricaodisciplinaList;
+    @JsonIgnore
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "inscricao", fetch = FetchType.LAZY)
     private Motivoinsc motivoinsc;
     @Column(name = "multa", precision = 8, scale = 8)

@@ -5,6 +5,7 @@
  */
 package esira.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.List;
 import javax.persistence.Basic;
@@ -75,34 +76,60 @@ public class Disciplina implements Serializable {
     private Float horasp;
     @Column(name = "natraso", length = 64)
     private String natraso;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "disciplina", fetch = FetchType.LAZY)
     private List<Precedencia> precedenciaList;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "disciplina1", fetch = FetchType.LAZY)
     private List<Precedencia> precedenciaList1;
+    
+    @JsonIgnore
     @JoinColumn(name = "area_cientifica", referencedColumnName = "idarea")
     @ManyToOne(fetch = FetchType.LAZY)
     private Areacientifica areaCientifica;
+    
+    @JsonIgnore
     @JoinColumn(name = "caracter", referencedColumnName = "id_caracter")
     @ManyToOne(fetch = FetchType.LAZY)
     private Caracter caracter;
+    
+    @JsonIgnore
     @JoinColumn(name = "curso", referencedColumnName = "id_curso")
     @ManyToOne(fetch = FetchType.LAZY)
     private Curso curso;
+    
+    @JsonIgnore
     @JoinColumn(name = "id_periodo", referencedColumnName = "id_periodo")
     @ManyToOne(fetch = FetchType.LAZY)
     private Periodo idPeriodo;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "disciplina", fetch = FetchType.LAZY)
     private List<Lecciona> leccionaList;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "disciplina", fetch = FetchType.LAZY)
     private List<Inscricaodisciplina> inscricaodisciplinaList;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "disciplina", fetch = FetchType.LAZY)
     private List<Pauta> pautaList;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "disciplina", fetch = FetchType.LAZY)
     private List<Planoavaliacao> planoavaliacaoList;
+    
+    @JsonIgnore
     @Column(name = "planoc")
     private Integer planoc;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "disciplina", fetch = FetchType.LAZY)
     private List<Equivalencia> equivalenciaList;
+    
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "disciplina1", fetch = FetchType.LAZY)
     private List<Equivalencia> equivalenciaList1;
 

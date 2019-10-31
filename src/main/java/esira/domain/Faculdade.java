@@ -5,6 +5,7 @@
  */
 package esira.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.List;
 import javax.persistence.Basic;
@@ -23,7 +24,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
  *
@@ -48,25 +48,41 @@ public class Faculdade implements Serializable {
     private String abreviatura;
     @Column(name = "endereco", length = 2147483647)
     private String endereco;
+    @JsonIgnore
     @OneToMany(mappedBy = "faculdade", fetch = FetchType.LAZY)
     private List<Funcionario> funcionarioList;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "faculdade", fetch = FetchType.LAZY)
     private List<Users> usersList;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "faculdade", fetch = FetchType.LAZY)
     private List<Curso> cursoList;
+
+    @JsonIgnore
     @JoinColumn(name = "director", referencedColumnName = "id_funcionario", nullable = false)
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Funcionario director;
+
+    @JsonIgnore
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "faculdade", fetch = FetchType.LAZY)
     private List<Validacaopendente> validacaopendenteList;
+
+    @JsonIgnore
     @Column(name = "localizacao", length = 2147483647)
     private String localizacao;
+
+    @JsonIgnore
     @OneToMany(mappedBy = "faculdade", fetch = FetchType.LAZY)
     private List<PlanificacaoAnoLectivo> planificacaoAnoLectivoList;
+
     @Column(name = "tenant", length = 32)
     private String tenant;
     @Column(name = "codigo", length = 32)
     private String codigo;
+
+    @JsonIgnore
     @JoinColumn(name = "iddelegacao", referencedColumnName = "iddelegacao", nullable = false)
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private Delegacao iddelegacao;
@@ -102,10 +118,6 @@ public class Faculdade implements Serializable {
         this.iddelegacao = iddelegacao;
     }
 
-   
-
-    
-    
     public String getAbreviatura() {
         return abreviatura;
     }

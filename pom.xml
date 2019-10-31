@@ -114,42 +114,56 @@
             <artifactId>spring-expression</artifactId>
             <version>${spring.version}</version>
         </dependency>
-<!-- https://mvnrepository.com/artifact/javax/javaee-web-api -->
-
-
-   <!-- https://mvnrepository.com/artifact/javax.servlet/servlet-api -->
-<dependency>
-    <groupId>javax.servlet</groupId>
-    <artifactId>servlet-api</artifactId>
-    <version>2.5</version>
-    <scope>provided</scope>
-</dependency>
-<!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
-<dependency>
-    <groupId>javax.xml.bind</groupId>
-    <artifactId>jaxb-api</artifactId>
-    <version>2.1</version>
-    <scope>provided</scope>
-</dependency>
- <dependency>
-    <groupId>javax</groupId>
-    <artifactId>javaee-web-api</artifactId>
-    <version>7.0</version>
-    <scope>provided</scope>
-</dependency>
-
-      <!--  <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
+        
+        <!-- https://mvnrepository.com/artifact/org.springframework/spring-beans -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+            <version>${spring.version}</version>
         </dependency>
-                
-                        <dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.4.1</version>
+        </dependency>
+        
+        
+        
+        <!-- https://mvnrepository.com/artifact/javax/javaee-web-api -->
+
+
+        <!-- https://mvnrepository.com/artifact/javax.servlet/servlet-api -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.4</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/javax.xml.bind/jaxb-api -->
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.1</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        
+        
+        
+        <dependency>
             <groupId>javax</groupId>
             <artifactId>javaee-web-api</artifactId>
             <version>7.0</version>
             <scope>provided</scope>
-        </dependency>--> 
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/javax.ws.rs/javax.ws.rs-api -->
         <dependency>
             <groupId>javax.ws.rs</groupId>
@@ -157,41 +171,6 @@
             <version>2.0</version>
             <scope>provided</scope>
         </dependency>
-        <!--   <dependency>
-                <groupId>javax.servlet.jsp</groupId>
-                <artifactId>jsp-api</artifactId>
-                <version>2.1</version>
-                <scope>provided</scope>
-        </dependency>
-        <dependency>
-                <groupId>javax.servlet</groupId>
-                <artifactId>jstl</artifactId>
-                <version>1.2</version>
-        </dependency>
-         @Inject 
-        <dependency>
-                <groupId>javax.inject</groupId>
-                <artifactId>javax.inject</artifactId>
-                <version>1</version>
-        </dependency>
-       Jackson  
-        <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>2.2.3</version>
-        </dependency>
-        <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-context</artifactId>
-                <version>${spring.version}</version>
-                <exclusions>
-                          Exclude Commons Logging in favor of SLF4j  
-                        <exclusion>
-                                <groupId>commons-logging</groupId>
-                                <artifactId>commons-logging</artifactId>
-                        </exclusion>
-                </exclusions>
-        </dependency> -->
         <!-- AOP dependency -->
         <dependency>
             <groupId>cglib</groupId>
@@ -222,7 +201,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>9.3-1100-jdbc41</version>
+            <version>42.2.5</version>
         </dependency>
 
 
@@ -246,7 +225,6 @@
         </dependency>
 
         <!-- ZK 5 breeze theme <dependency> <groupId>org.zkoss.theme</groupId> 
-        <artifactId>breeze</artifactId> <version>${zk.version}</version> <optional>true</optional> 
         </dependency> -->
         <dependency>
             <groupId>javax.annotation</groupId>
@@ -276,11 +254,9 @@
             <version>1.1.1</version>
         </dependency>
         <dependency>
-            <groupId>c3p0</groupId>
+            <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
-            <version>0.9.1.2</version>
-            <type>jar</type>
-            <scope>compile</scope>
+            <version>0.9.5.4</version>
         </dependency>
         <!--   <dependency>
             <groupId>com.mchange</groupId>
@@ -380,13 +356,14 @@
                             <goal>single</goal>
                         </goals>
                         
-                        <configuration><extensions>true</extensions>
+                        <configuration>
+                            <extensions>true</extensions>
                             <finalName>eSira${packname}</finalName>
                             <appendAssemblyId>false</appendAssemblyId>
                             <descriptors>
                                 <descriptor>src/main/assembly/webapp.xml</descriptor>
                             </descriptors>
-                          <!--  <instructions>
+                            <!--  <instructions>
                                 <Import-Package>
                                     javax.ws.rs*;version="[1,2)",	
                                     javax.servlet*;version="2.5",

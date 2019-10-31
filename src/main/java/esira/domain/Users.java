@@ -5,6 +5,7 @@
  */
 package esira.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -45,6 +46,7 @@ public class Users implements Serializable {
     private String email;
     @Column(name = "pasword", length = 45)
     private String pasword;
+    @JsonIgnore
     @Column(name = "last_access")
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastAccess;
@@ -55,20 +57,25 @@ public class Users implements Serializable {
     @JoinColumn(name = "id_estudante", referencedColumnName = "id_estudante")
     @ManyToOne(fetch = FetchType.LAZY)
     private Estudante idEstudante;
+    @JsonIgnore
     @JoinColumn(name = "faculdade", referencedColumnName = "id_faculdade")
     @ManyToOne(fetch = FetchType.LAZY)
     private Faculdade faculdade;
+    @JsonIgnore
     @JoinColumn(name = "id_funcionario", referencedColumnName = "id_funcionario")
     @ManyToOne(fetch = FetchType.LAZY)
     private Funcionario idFuncionario;
+    @JsonIgnore
     @JoinColumn(name = "id_grupo", referencedColumnName = "id_grupo")
     @ManyToOne(fetch = FetchType.LAZY)
     private Grupo idGrupo;
+    @JsonIgnore
     @JoinTable(name = "usergrupo", joinColumns = {
         @JoinColumn(name = "utilizador", referencedColumnName = "utilizador", nullable = false)}, inverseJoinColumns = {
         @JoinColumn(name = "id_grupo", referencedColumnName = "id_grupo", nullable = false)})
     @ManyToMany(fetch = FetchType.LAZY)
     private List<Grupo> grupoList;
+    @JsonIgnore
     @Column(name = "tenant", length = 45)
     private String tenant;
 
