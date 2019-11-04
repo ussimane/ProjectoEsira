@@ -36,7 +36,6 @@
                     <listhead>
                         <listheader label="Nome" align="center"/>
                         <listheader label="Utilizador" align="center"/>
-                        <listheader label="Senha" align="center"/>
                         <listheader label="Nome do Grupo" align="center"/>
                         <listheader label="email" align="center"/>
                         <listheader label="Ultimo acesso" align="center"/>
@@ -49,9 +48,6 @@
                             </listcell>
                             <listcell >
                                 <label value="${each.utilizador}"/>
-                            </listcell>
-                            <listcell >
-                                <label value="${each.pasword}"/>
                             </listcell>
                             <listcell >
                                 <label value="${each.idGrupo.idGrupo}"/>

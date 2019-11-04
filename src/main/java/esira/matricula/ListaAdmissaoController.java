@@ -43,6 +43,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -65,6 +66,7 @@ import org.zkoss.zk.ui.event.EventQueue;
 import org.zkoss.zk.ui.event.EventQueues;
 import org.zkoss.zk.ui.event.ForwardEvent;
 import org.zkoss.zk.ui.event.InputEvent;
+import org.zkoss.zk.ui.event.UploadEvent;
 import org.zkoss.zk.ui.select.annotation.WireVariable;
 import org.zkoss.zk.ui.util.Clients;
 import org.zkoss.zk.ui.util.GenericForwardComposer;
@@ -92,6 +94,11 @@ import org.zkoss.zul.Tabbox;
 import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Window;
 import org.zkoss.zul.event.PagingEvent;
+import org.zkoss.zul.event.PagingEvent;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.hibernate.Transaction;
 
 /**
  *
@@ -127,6 +134,7 @@ public class ListaAdmissaoController extends GenericForwardComposer {
     Combobox cbcurso;
     private Button btv;
     private EventQueue eq;
+    private Window janelaInformacao;
 
   //  @Init
     @Override
@@ -1454,5 +1462,160 @@ public class ListaAdmissaoController extends GenericForwardComposer {
     public void onLoadi() {
         int i = lbplm.getItemCount();
         setLB(i, i + 20);
+    }
+    
+        public void onUploadFile(ForwardEvent evt){
+         Button button = (Button)evt.getOrigin().getTarget();
+        
+         button.addEventListener("onUpload", new EventListener<UploadEvent>() {
+             @Override
+             @SuppressWarnings("empty-statement")
+             public void onEvent(UploadEvent event) throws Exception {
+                String alert = "";
+                Media media = event.getMedia();
+                janelaInformacao.setVisible(false);
+                boolean t,j = false,k = false;
+                
+                Hashtable<String,Integer> cursosCounter = new Hashtable<>();
+                  
+                List<Curso> cursos = csimpm.getAll(Curso.class);
+                
+                for (Curso curso : cursos){
+                    if (!cursosCounter.containsKey(curso.getAbreviatura())){
+                        cursosCounter.put(curso.getAbreviatura(),1);
+                    }
+                }
+                
+                Transaction transacao = csimpm.getTransacao();
+                
+                try {
+                    transacao.begin();
+                  
+                    XSSFWorkbook wb = new XSSFWorkbook(media.getStreamData());
+                    XSSFSheet sheet = wb.getSheetAt(0);
+                        
+                    String nome = "";
+                    String curso = "";
+                    String nrBI = "";
+                    double telefone = 0 ;
+                    int val = 0;
+                    t = false;
+                    j = false;
+                    int a = 0;
+                    for (org.apache.poi.ss.usermodel.Row row : sheet){
+                       val = 0;
+                        if (t){
+                                for (Cell cell : row){
+                                   
+                                  switch(val){
+                                      case 0: nome = cell.getStringCellValue(); break;
+                                      case 1: curso = cell.getStringCellValue(); break;
+                                      case 2: nrBI = cell.getStringCellValue(); break;
+                                      case 3: telefone = cell.getNumericCellValue();break;
+                                  }
+                                  
+                                  if (val == 3){
+                                      
+                                        if (nrBI.length() ==13 || nrBI.length() == 9){
+                                            
+                                            String tel = (int)telefone +"";
+                                            if (tel.length() == 9){
+                                                
+                                                    Documento dd = new Documento();
+                                                    dd.setNrDocumento(nrBI);
+                                                    String sql = "from Curso c where c.abreviatura like \'%"+ curso.toUpperCase() +"%\'";
+                                                    Curso c = (Curso)csimpm.findEntByJPQuery(sql, null);
+
+                                                if (c != null){
+                                                        long  i = (long) telefone; 
+                                                       
+                                                        String nmec = "";
+                                                        int anoIngresso = Calendar.getInstance().get(Calendar.YEAR);
+                                                        String faculdade = c.getFaculdade().getCodigo();
+                                                        String codigoCurso = c.getCodigoCurso();
+
+                                                        Integer cont = cursosCounter.get(c.getAbreviatura()); 
+                                                        
+                                                        if (cont.toString().length() == 1){
+                                                            nmec = anoIngresso+faculdade+codigoCurso+ "00"+cont;    
+                                                        }else if (cont.toString().length() == 2){
+                                                            nmec = anoIngresso+faculdade+codigoCurso+"0"+cont;    
+                                                        }
+                                                        
+                                                        ++cont;
+                                                        
+                                                        cursosCounter.put(c.getAbreviatura(),cont);
+                                                        
+                                                        Listaadmissao novoIngresso = new Listaadmissao();
+                                                        novoIngresso.setNome(nome);
+                                                        novoIngresso.setCurso(c);
+                                                        novoIngresso.setNrBI(nrBI);
+                                                        novoIngresso.setTelefone(i+"");
+                                                        novoIngresso.setNumero(nmec);
+                                                        
+                                                        csimpm.Saves(novoIngresso);
+                                                         val = -1;
+                                                }else{
+                                                   j = true;
+                                                   Clients.showNotification("Corrija o Curso do estudante :\n"+"["+nome+"] ",Clients.NOTIFICATION_TYPE_ERROR,null,null,2000);
+                                                   break;
+                                                }
+                                            }else{
+                                               j = true;
+                                               alert = "Corrija o numero de Telefone do estudante :\n"+"["+nome+"]"
+                                                       + "\n[NB: O numero de telefone deve conter 9 digitos] ";
+                                               Clients.showNotification(alert, Clients.NOTIFICATION_TYPE_WARNING, null, null, 2000);
+                                               break;
+                                            }
+                                        }else{
+                                            j = true;
+                                            alert = "Corrija o numero de Documento do estudante :\n"+"["+nome+"] "
+                                                    + "\n[NB: Em caso de BI o Numero de documento deve conter 13 digitos]"
+                                                    + "\n[NB: Em caso de Passaporte o documento deve conter 9 digitos]";
+                                            Clients.showNotification(alert, Clients.NOTIFICATION_TYPE_WARNING, null, null, 2000);
+                                            break;
+                                        }
+                                  }
+                                    val++;
+                                }
+                                
+                                if (j){
+                                    break;
+                                }
+                            }
+                            else{
+                                t = true;
+                            }
+                    }
+                  
+                    if (j){
+                        transacao.rollback();
+                    }else{
+                        Clients.showNotification("O ficheiro "+media.getName()+" foi importado com sucesso.", null, null, null, 2000);
+                        transacao.commit();
+                    }
+                } catch (Exception e) {
+                     Clients.showNotification("Ocorreu uma falha na Importacao do ficheiro "+media.getName(), Clients.NOTIFICATION_TYPE_ERROR, null, null, 3000);
+                     transacao.rollback();
+                }finally{
+                    if (j){
+                        while(!transacao.wasRolledBack());
+                    }else{
+                        while(!transacao.wasCommitted());
+                    }
+                }
+             }
+
+         });
+
+    }
+    
+    public void onClickApearInfo(){
+        janelaInformacao.setVisible(true);
+        janelaInformacao.doModal();
+    }
+    
+    public void onSetFalseVisibility(ForwardEvent evt){
+        janelaInformacao.setVisible(false);
     }
 }

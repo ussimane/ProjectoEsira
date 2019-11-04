@@ -118,4 +118,10 @@
 
     <!-- Enables the Spring MVC @Controller programming model -->
     <mvc:annotation-driven />
+     <mvc:resources mapping="/icon/**" location="/icon/" />
+     <mvc:resources mapping="/images/**" location="/images/" />
+     <mvc:resources mapping="/icones/**" location="/icones/" />
+     <mvc:resources mapping="/img/**" location="/img/" />
+     <mvc:resources mapping="/**" location="/" />
+     <mvc:resources mapping="/css/**" location="/css/" />
 </beans> 

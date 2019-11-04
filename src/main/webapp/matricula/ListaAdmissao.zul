@@ -17,9 +17,10 @@
         <label id="massage" style="color:red"/>
         <hbox >
             <div>
-                <button autodisable="self" id="addList" forward="onClick=onAddList" label="Adicionar Admitido" mold="trendy" />
-                <button autodisable="self" label="Exportar" image="/icon/ico-excel.png" forward="onClick=onExcelExport"/>
-            </div>
+                 <button  id="uploadInfoButton"  image="/icon/excel.png"  autodisable="self" label="Importar" forward="onClick=onClickApearInfo" mold="trendy" />
+                 <button autodisable="self" id="exportBtn" label="Exportar" image="/icon/ico-excel.png" forward="onClick=onExcelExport"/>
+                 <button autodisable="self" id="addList" forward="onClick=onAddList" label="Adicionar Admitido" mold="trendy" />
+             </div>
         </hbox>
         
         
@@ -207,8 +208,25 @@
             </div>
       
         </window>
-        
-   
+          <window id="janelaInformacao"  position="center,center" closable="false"  visible="false" border="none"
+               width="90%" apply="esira.matricula.ListaAdmissaoController">
+          
+            <grid >
+                <columns>
+                  <column label="O ficheiro Excel a importar para o Sistema deve seguir o modelo abaixo. [Cabecalho, e o prenchimento das linhas]" >
+                        <button sclass="mybutton button blue" upload="true" id="uploadButton"  label="Continuar" forward="onClick=onUploadFile"  height="50px" /> 
+                        <button  autodisable="self" label="Cancelar" forward="onClick=onSetFalseVisibility" height="50px" /> 
+                  </column>     
+                </columns>
+                  <rows >
+                    <row>
+                        <div>
+                            <image src="icon/tabela.png"  />
+                  	</div>
+                  	</row>
+                    </rows>
+                  </grid>
+        </window>
     </window>
     <style>
         
