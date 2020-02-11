@@ -143,7 +143,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
 //        condpar.put("anoi", ano);
 //        condanoi = " and m.matriculaPK.ano = :anoi";
             ListModel lm = getListaCursoModel();
-            if (cbcurso != null&&lm!=null&&lm.getSize()>0) {
+            if (cbcurso != null && lm != null && lm.getSize() > 0) {
                 cbcurso.setModel(getListaCursoModel());
                 condpar.put("curso", lm.getElementAt(0));
                 condcurso = " and m.curso = :curso";
@@ -151,9 +151,11 @@ public class ListaEstudantesController extends GenericForwardComposer {
             }
         }
     }
-    
-    public void onAfrender(){
-     if(cbcurso.getModel()!=null&&cbcurso.getModel().getSize()>0)cbcurso.setSelectedIndex(0);
+
+    public void onAfrender() {
+        if (cbcurso.getModel() != null && cbcurso.getModel().getSize() > 0) {
+            cbcurso.setSelectedIndex(0);
+        }
     }
 
     public void onSetQueueEstMat() {
@@ -177,7 +179,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
     }
 
     public void onSetQueueEstMatAnul() {
-       //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         eq = EventQueues.lookup("rmatA" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEventoAnulacao());
         eq = EventQueues.lookup("anulaM" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
@@ -303,7 +305,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
         Map<String, Object> par = new HashMap<String, Object>();
         par.clear();
         par.put("user", usr.getUtilizador());
-       // Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+        // Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
         par.clear();
         Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.put("fac", f);
@@ -344,7 +346,6 @@ public class ListaEstudantesController extends GenericForwardComposer {
         par.put("ide", user.getIdEstudante().getIdEstudante());
         Matricula ma = csimpm.findEntByJPQuery("select k from Matricula k where k.dataMatricula in (select max(m.dataMatricula) from Matricula m "
                 + "WHERE m.matriculaPK.idEstudante =:ide) and k.matriculaPK.idEstudante = :ide", par);
-       Messagebox.show(ma.getPeriodo()+"");
         if (ma == null) {
             Clients.showNotification("A sua matricula nao pode ser renovada. \n"
                     + "Provavelmente o estudante nao tem nenhuma nota", "warning", null, null, 0);
@@ -374,10 +375,14 @@ public class ListaEstudantesController extends GenericForwardComposer {
             }
         }
 
-       Users up = csimpm.get(Users.class, usr.getUtilizador());
-             par.clear();
-            par.put("fac", up.getFaculdade());
-           PlanificacaoAnoLectivo planificacaoAnoLectivo = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo p where p.faculdade = :fac", par);
+        Users up = csimpm.get(Users.class, usr.getUtilizador());
+        if (usr.getUestudante() && up.getFaculdade() == null) {
+            Clients.showNotification("Os seus credenciais não pertencem a nenhuma faculdade. Contacte a direção", "warning", null, null, 0);
+            return;
+        }
+        par.clear();
+        par.put("fac", up.getFaculdade());
+        PlanificacaoAnoLectivo planificacaoAnoLectivo = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo p where p.faculdade = :fac", par);
         if (planificacaoAnoLectivo != null) {
 //            if (dano.before(planificacaoAnoLectivo.getDataInicioMatricula())) {
 //                Clients.showNotification("Fora da Epoca de Matricula", "warning", null, null, 0);
@@ -496,13 +501,13 @@ public class ListaEstudantesController extends GenericForwardComposer {
         Estudante estudante = mat.getEstudante();
         estudante = csimpm.load(Estudante.class, estudante.getIdEstudante());
        // par.clear();
-       // par.put("ide", estudante);
-       // Prescricao pre = csimpm.findEntByJPQuery("from Prescricao p where p.inscricaodisciplina.inscricao.idEstudante = :ide"
-      //          + " and p.estado is true", par);
-       // if (pre != null) {
-       //     Clients.showNotification("O estudante prescreveu uma disciplina! So poderá Matricular depois de regularizar", "error", null, null, 0);
-       //     win.detach();
-       // }
+        // par.put("ide", estudante);
+        // Prescricao pre = csimpm.findEntByJPQuery("from Prescricao p where p.inscricaodisciplina.inscricao.idEstudante = :ide"
+        //          + " and p.estado is true", par);
+        // if (pre != null) {
+        //     Clients.showNotification("O estudante prescreveu uma disciplina! So poderá Matricular depois de regularizar", "error", null, null, 0);
+        //     win.detach();
+        // }
         Bolsa bols = estudante.getBolsa();
         Long cursocurrente = estudante.getCursocurrente().getIdCurso();
         Long cursoingresso = estudante.getCursoingresso().getIdCurso();
@@ -947,7 +952,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
         Calendar c = Calendar.getInstance();
         Map<String, Object> par = new HashMap<String, Object>();
         par.clear();
-       // Users u = csimpm.get(Users.class, usr.getUtilizador());
+        // Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
         Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.put("fac", f);
@@ -958,7 +963,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     public ListModel<Curso> getListaCursoModel() {
-       //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
         Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.put("fac", f);
