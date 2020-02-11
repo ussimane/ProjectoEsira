@@ -9,7 +9,6 @@ import entidade.Arquivo;
 import esira.domain.Arquivoestudante;
 import esira.domain.Arquivomatricula;
 import esira.domain.Bolsa;
-import esira.domain.Caracter;
 import esira.domain.Curso;
 import esira.domain.Documento;
 import esira.domain.Endereco;
@@ -17,13 +16,11 @@ import esira.domain.Enderecof;
 import esira.domain.Estadocivil;
 import esira.domain.Estudante;
 import esira.domain.Faculdade;
-import esira.domain.Funcionario;
 import esira.domain.Ingressobolseiro;
 import esira.domain.Ingressoexameadmissao;
 import esira.domain.Ingressomudancauniversidade;
 import esira.domain.Listaadmissao;
 import esira.domain.Matricula;
-import esira.domain.Operacaopedido;
 import esira.domain.Pais;
 import esira.domain.PlanificacaoAnoLectivo;
 import esira.domain.Profissao;
@@ -47,17 +44,15 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import javax.servlet.http.HttpSessionEvent;
+import java.util.Objects;
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.zkoss.bind.annotation.Init;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.zkoss.image.AImage;
 import org.zkoss.image.Image;
 import org.zkoss.lang.Strings;
 import org.zkoss.util.media.AMedia;
 import org.zkoss.util.media.Media;
 import org.zkoss.zk.ui.Component;
-import org.zkoss.zk.ui.Desktop;
 import org.zkoss.zk.ui.Executions;
 import org.zkoss.zk.ui.Sessions;
 import org.zkoss.zk.ui.event.Event;
@@ -76,7 +71,6 @@ import org.zkoss.zul.Combobox;
 import org.zkoss.zul.Comboitem;
 import org.zkoss.zul.Datebox;
 import org.zkoss.zul.Div;
-import org.zkoss.zul.Grid;
 import org.zkoss.zul.Intbox;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.ListModel;
@@ -87,15 +81,15 @@ import org.zkoss.zul.Listitem;
 import org.zkoss.zul.Messagebox;
 import org.zkoss.zul.Paging;
 import org.zkoss.zul.Radio;
-import org.zkoss.zul.Radiogroup;
 import org.zkoss.zul.Row;
 import org.zkoss.zul.Tab;
-import org.zkoss.zul.Tabbox;
 import org.zkoss.zul.Textbox;
 import org.zkoss.zul.Window;
 import org.zkoss.zul.event.PagingEvent;
-import org.zkoss.zul.event.PagingEvent;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.hibernate.Transaction;
@@ -114,9 +108,9 @@ public class ListaAdmissaoController extends GenericForwardComposer {
     Window mDialogAddLista, winmain, win, mDialogMatricula;
     Button addList, guardarLista;
     Button cancelarLista;
-    Combobox cbCurso, cbTipoAdm, cbProcuracurso, cbTurnoA,cbfaculdade;
+    Combobox cbCurso, cbTipoAdm, cbProcuracurso, cbTurnoA, cbfaculdade;
     Textbox txNome, txBI, txPbi, txCont, txPnome, txNumero;
-    private Intbox ibidaluno, litem;
+    private Intbox ibidaluno, litem, ibProcAno;
     List listaM = csimpm.getAll(Listaadmissao.class);
     Map<String, Object> par = new HashMap<String, Object>();
     Users usr = (Users) Sessions.getCurrent().getAttribute("user");
@@ -131,12 +125,13 @@ public class ListaAdmissaoController extends GenericForwardComposer {
     private Long idEstuMudaC;
     String condfac = "", condnr = "", condnome = "", condgenero = "", condanoi = "", condano = "", condcurso = "";
     Textbox txProcurar;
+    Intbox ibanoi, anoeliminar;
     Combobox cbcurso;
     private Button btv;
     private EventQueue eq;
-    private Window janelaInformacao;
+    private Window janelaInformacao, formApagarLista;
 
-  //  @Init
+    //  @Init
     @Override
     public void doAfterCompose(Component comp) throws Exception {
         super.doAfterCompose(comp);
@@ -149,26 +144,55 @@ public class ListaAdmissaoController extends GenericForwardComposer {
         condpar.clear();
         condcurso = " and la.curso.faculdade = :fac ";
         //Users u = csimpm.get(Users.class, usr.getUtilizador());
-        if(usr.getFaculdade().getLocalizacao()==null){
+        if (usr.getFaculdade().getLocalizacao() == null) {
             cbfaculdade.setVisible(true);
             cbfaculdade.setModel(getFaculdadeModel());
-          }
+        }
         Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         condpar.put("fac", f);
+        Date dano = new Date();
+        Calendar cal = new GregorianCalendar();
+        cal.setTime(dano);
+        int ano = cal.get(Calendar.YEAR);
+        ibProcAno.setValue(ano);
+        condpar.put("a", ano);
+        condano = " and la.ano = :a ";
         setLB(0, 20);
 
     }
-    
+
+    public void onChanging$ibProcAno(InputEvent evt) {
+        if (!evt.getValue().equals("") && evt.getValue().charAt(0) != '.') {
+            condano = " and la.ano = :a ";
+            if (condpar.containsKey("a")) {
+                condpar.replace("a", Integer.parseInt(evt.getValue()));
+            } else {
+                condpar.put("a", Integer.parseInt(evt.getValue()));
+            }
+        } else {
+            condano = "";
+            if (condpar.containsKey("a")) {
+                condpar.remove("a");
+            }
+        }
+        setLB(0, 20);
+    }
+
     public ListModel<Faculdade> getFaculdadeModel() {
         List<Faculdade> faculdades = csimpm.getAll(Faculdade.class);
         return new ListModelList<Faculdade>(faculdades);
     }
-    
+
     public void onSelectcbfaculdadeCurso() {
         if (cbfaculdade.getSelectedItem() != null) {
             Faculdade f = cbfaculdade.getSelectedItem().getValue();
             f = csimpm.get(Faculdade.class, f.getIdFaculdade());
-            cbcurso.setModel(new ListModelList<Curso>(f.getCursoList()));
+            Curso c = new Curso();
+            c.setDescricao("-----Todos cursos-----");
+            List<Curso> lc = new ArrayList<Curso>();
+            lc.add(c);
+            lc.addAll(f.getCursoList());
+            cbcurso.setModel(new ListModelList<Curso>(lc));
             condcurso = " and la.curso.faculdade = :fac ";
             if (condpar.containsKey("curso")) {
                 condpar.remove("curso");
@@ -280,11 +304,12 @@ public class ListaAdmissaoController extends GenericForwardComposer {
         Users us = csimpm.get(Users.class, usr.getUtilizador());
         if (c == 0) {
             Listaadmissao l = new Listaadmissao();
-            //l.setAno(cbTipoAdm.getSelectedIndex());
+            l.setAno(ibanoi.getValue());
             l.setCurso((Curso) cbCurso.getSelectedItem().getValue());
             l.setNumero(txNumero.getValue());
             l.setNome(txNome.getValue());
             l.setNrBI(txBI.getValue());
+            l.setContacto(txCont.getValue());
             l.setTelefone(txCont.getValue());
             l.setMatriculado(false);
             l.setTurno(Integer.parseInt(cbTurnoA.getSelectedItem().getValue().toString()));
@@ -312,8 +337,10 @@ public class ListaAdmissaoController extends GenericForwardComposer {
                                     //l.setAno(cbTipoAdm.getSelectedIndex());                                   
                                     l.setCurso((Curso) cbCurso.getSelectedItem().getValue());
                                     l.setNome(txNome.getValue());
+                                    l.setAno(ibanoi.getValue());
                                     l.setNumero(txNumero.getValue());
                                     l.setNrBI(txBI.getValue());
+                                    l.setContacto(txCont.getValue());
                                     l.setTelefone(txCont.getValue());
                                     l.setTipoad(cbTipoAdm.getSelectedItem().getLabel());
                                     l.setTurno(Integer.parseInt(cbTurnoA.getSelectedItem().getValue().toString()));
@@ -371,7 +398,7 @@ public class ListaAdmissaoController extends GenericForwardComposer {
     public ListModel<Curso> getListCursoModel() {
         //Users u = csimpm.get(Users.class, usr.getUtilizador());
         par.clear();
-        List<Curso> lc=null;
+        List<Curso> lc = null;
         if (usr.getFaculdade().getLocalizacao() != null) {
             Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
             par.put("fac", f);
@@ -424,7 +451,14 @@ public class ListaAdmissaoController extends GenericForwardComposer {
         }
         Calendar c = new GregorianCalendar();
         c.setTime(dano);
-        PlanificacaoAnoLectivo planificacaoAnoLectivo = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo", null);
+        Users up = csimpm.get(Users.class, usr.getUtilizador());
+        par.clear();
+        par.put("fac", la.getCurso().getFaculdade());
+        PlanificacaoAnoLectivo planificacaoAnoLectivo = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo p where p.faculdade = :fac", par);
+        if (planificacaoAnoLectivo == null) {
+            Clients.showNotification("Não foi encontrado um plano de matriculas para " + la.getCurso().getFaculdade(), "error", null, null, 3000);
+            return;
+        }
         if (planificacaoAnoLectivo != null) {
             if (dano.before(planificacaoAnoLectivo.getDatainicioInscricao())) {
                 Clients.showNotification("Por favor aguarde o periodo de Matriculas", "warning", null, null, 0, true);
@@ -462,78 +496,72 @@ public class ListaAdmissaoController extends GenericForwardComposer {
                     tbnome.setReadonly(true);
                     novaMatricula(win, todo, litem.getIndex());
                 }
+
+//            } else if ((dano.after(planificacaoAnoLectivo.getDataFimIE1()) && dano.before(planificacaoAnoLectivo.getDataFimIE2())) || (mat != null && mat.getPeriodo() != null && mat.getPeriodo().equals("M15"))) {
+//                Button btn = (Button) evt.getOrigin().getTarget();
+//                Listitem litem = (Listitem) btn.getParent().getParent();
+//                final HashMap<String, Object> map = new HashMap<String, Object>();
+//                map.put("periodo", "M15");
+//                if (mat == null) {
+//                    win = (Window) Executions.createComponents("/matricula/Matricula.zul", winmain, map);
 //                } else {
-//                    if (dano.after(planificacaoAnoLectivo.getDataFimIE1())
-//                            && dano.before(planificacaoAnoLectivo.getDataFimIE2())) {
-//                        c = Calendar.getInstance();
-//                        c.setTime(planificacaoAnoLectivo.getDataFimIE1());
-//                        c.add(Calendar.DAY_OF_MONTH, 15);
-//                        if (c.getTime().after(dano)) {
-            } else if ((dano.after(planificacaoAnoLectivo.getDataFimIE1()) && dano.before(planificacaoAnoLectivo.getDataFimIE2())) || (mat != null && mat.getPeriodo() != null && mat.getPeriodo().equals("M15"))) {
-                Button btn = (Button) evt.getOrigin().getTarget();
-                Listitem litem = (Listitem) btn.getParent().getParent();
-                final HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("periodo", "M15");
-                if (mat == null) {
-                    win = (Window) Executions.createComponents("/matricula/Matricula.zul", winmain, map);
-                } else {
-                    win.setParent(winmain);
-                    win.doModal();
-                }
-                Textbox tbnome = (Textbox) win.getFellow("tbnomeCompleto");
-                Textbox tbnrmeca = (Textbox) win.getFellow("nrmeca");
-                ((Label) win.getFellow("taxamultas")).setValue("M15");//Conhecer o periodo para calcular multa
-                ((Label) win.getFellow("lbtaxaMatricula")).setValue(planificacaoAnoLectivo.getTaxaMatriculaNacional().toString());
-                ((Label) win.getFellow("lbtaxaMatriculaE")).setValue(planificacaoAnoLectivo.getTaxaMatriculaEstrangeiro().toString());
-                ((Row) win.getFellow("rwTaxamulta15")).setVisible(true);
-                ((Row) win.getFellow("rwTaxamulta30")).setVisible(false);
-                ((Row) win.getFellow("rwmulta")).setVisible(false);
-                ((Div) win.getFellow("prazo")).setVisible(false);
-                ((Row) win.getFellow("prazomat")).setVisible(false);
-                Listaadmissao todo = null;
-                if (mat != null) {
-                    renovar(mat, win, litem.getIndex());
-                } else {
-                    todo = (Listaadmissao) litem.getValue();
-                    tbnrmeca.setValue(todo.getNumero());
-                    tbnome.setValue(todo.getNome());
-                    tbnome.setReadonly(true);
-                    novaMatricula(win, todo, litem.getIndex());
-                }
-            } else if ((dano.after(planificacaoAnoLectivo.getDataFimIE2()) && dano.before(planificacaoAnoLectivo.getDma1())) || (mat != null && mat.getPeriodo() != null && mat.getPeriodo().equals("M30"))) {
-//                                Messagebox.show("Periodo de Multa 30 dias = " + planificacaoAnoLectivo.getPercentagemMultaMatricula30dias());
-//                                
-                Button btn = (Button) evt.getOrigin().getTarget();
-                Listitem litem = (Listitem) btn.getParent().getParent();
-                final HashMap<String, Object> map = new HashMap<String, Object>();
-                map.put("periodo", "M30");
-                if (mat == null) {
-                    win = (Window) Executions.createComponents("/matricula/Matricula.zul", winmain, map);
-                } else {
-                    win.setParent(winmain);
-                    win.doModal();
-                }
-                Textbox tbnome = (Textbox) win.getFellow("tbnomeCompleto");
-                Textbox tbnrmeca = (Textbox) win.getFellow("nrmeca");
-                ((Label) win.getFellow("taxamultas")).setValue("M30");
-                ((Label) win.getFellow("lbtaxaMatricula")).setValue(planificacaoAnoLectivo.getTaxaMatriculaNacional().toString());
-                ((Label) win.getFellow("lbtaxaMatriculaE")).setValue(planificacaoAnoLectivo.getTaxaMatriculaEstrangeiro().toString());
-                //    ((Label) win.getFellow("lbtaxaMuniversidade")).setValue(planificacaoAnoLectivo.getTaxaDeMudancaoTurno().toString());
-                ((Row) win.getFellow("rwTaxamulta30")).setVisible(true);
-                ((Row) win.getFellow("rwTaxamulta15")).setVisible(false);
-                ((Row) win.getFellow("rwmulta")).setVisible(false);
-                ((Div) win.getFellow("prazo")).setVisible(false);
-                ((Row) win.getFellow("prazomat")).setVisible(false);
-                Listaadmissao todo = null;
-                if (mat != null) {
-                    renovar(mat, win, litem.getIndex());
-                } else {
-                    todo = (Listaadmissao) litem.getValue();
-                    tbnrmeca.setValue(todo.getNumero());
-                    tbnome.setValue(todo.getNome());
-                    tbnome.setReadonly(true);
-                    novaMatricula(win, todo, litem.getIndex());
-                }
+//                    win.setParent(winmain);
+//                    win.doModal();
+//                }
+//                Textbox tbnome = (Textbox) win.getFellow("tbnomeCompleto");
+//                Textbox tbnrmeca = (Textbox) win.getFellow("nrmeca");
+//                ((Label) win.getFellow("taxamultas")).setValue("M15");//Conhecer o periodo para calcular multa
+//                ((Label) win.getFellow("lbtaxaMatricula")).setValue(planificacaoAnoLectivo.getTaxaMatriculaNacional().toString());
+//                ((Label) win.getFellow("lbtaxaMatriculaE")).setValue(planificacaoAnoLectivo.getTaxaMatriculaEstrangeiro().toString());
+//                ((Row) win.getFellow("rwTaxamulta15")).setVisible(true);
+//                ((Row) win.getFellow("rwTaxamulta30")).setVisible(false);
+//                ((Row) win.getFellow("rwmulta")).setVisible(false);
+//                ((Div) win.getFellow("prazo")).setVisible(false);
+//                ((Row) win.getFellow("prazomat")).setVisible(false);
+//                Listaadmissao todo = null;
+//                if (mat != null) {
+//                    renovar(mat, win, litem.getIndex());
+//                } else {
+//                    todo = (Listaadmissao) litem.getValue();
+//                    tbnrmeca.setValue(todo.getNumero());
+//                    tbnome.setValue(todo.getNome());
+//                    tbnome.setReadonly(true);
+//                    novaMatricula(win, todo, litem.getIndex());
+//                }
+//            } else if ((dano.after(planificacaoAnoLectivo.getDataFimIE2()) && dano.before(planificacaoAnoLectivo.getDma1())) || (mat != null && mat.getPeriodo() != null && mat.getPeriodo().equals("M30"))) {
+////                                Messagebox.show("Periodo de Multa 30 dias = " + planificacaoAnoLectivo.getPercentagemMultaMatricula30dias());
+////                                
+//                Button btn = (Button) evt.getOrigin().getTarget();
+//                Listitem litem = (Listitem) btn.getParent().getParent();
+//                final HashMap<String, Object> map = new HashMap<String, Object>();
+//                map.put("periodo", "M30");
+//                if (mat == null) {
+//                    win = (Window) Executions.createComponents("/matricula/Matricula.zul", winmain, map);
+//                } else {
+//                    win.setParent(winmain);
+//                    win.doModal();
+//                }
+//                Textbox tbnome = (Textbox) win.getFellow("tbnomeCompleto");
+//                Textbox tbnrmeca = (Textbox) win.getFellow("nrmeca");
+//                ((Label) win.getFellow("taxamultas")).setValue("M30");
+//                ((Label) win.getFellow("lbtaxaMatricula")).setValue(planificacaoAnoLectivo.getTaxaMatriculaNacional().toString());
+//                ((Label) win.getFellow("lbtaxaMatriculaE")).setValue(planificacaoAnoLectivo.getTaxaMatriculaEstrangeiro().toString());
+//                //    ((Label) win.getFellow("lbtaxaMuniversidade")).setValue(planificacaoAnoLectivo.getTaxaDeMudancaoTurno().toString());
+//                ((Row) win.getFellow("rwTaxamulta30")).setVisible(true);
+//                ((Row) win.getFellow("rwTaxamulta15")).setVisible(false);
+//                ((Row) win.getFellow("rwmulta")).setVisible(false);
+//                ((Div) win.getFellow("prazo")).setVisible(false);
+//                ((Row) win.getFellow("prazomat")).setVisible(false);
+//                Listaadmissao todo = null;
+//                if (mat != null) {
+//                    renovar(mat, win, litem.getIndex());
+//                } else {
+//                    todo = (Listaadmissao) litem.getValue();
+//                    tbnrmeca.setValue(todo.getNumero());
+//                    tbnome.setValue(todo.getNome());
+//                    tbnome.setReadonly(true);
+//                    novaMatricula(win, todo, litem.getIndex());
+//                }
             } else {
                 //Messagebox.show("Periodo de Multa 30 dias = " + planificacaoAnoLectivo.getPercentagemMultaMatricula30dias());    
                 Button btn = (Button) evt.getOrigin().getTarget();
@@ -630,6 +658,13 @@ public class ListaAdmissaoController extends GenericForwardComposer {
         Combobox cbcur = (Combobox) win.getFellow("cbcursocurrente");
         ((Intbox) win.getFellow("ibplanoc")).setValue(t.getCurso().getPlanoc());
         ((Intbox) win.getFellow("ibturno")).setValue(t.getTurno());
+        ((Intbox) win.getFellow("ibano")).setValue(t.getAno());
+        ((Combobox) win.getFellow("cbTurno")).setButtonVisible(false);
+        if (t.getTurno() == 1) {
+            ((Combobox) win.getFellow("cbTurno")).setSelectedIndex(0);
+        } else {
+            ((Combobox) win.getFellow("cbTurno")).setSelectedIndex(1);
+        }
         if (mudarcurso) {
             ((Intbox) win.getFellow("idEstuMudaC")).setValue(idEstuMudaC.intValue());
             Curso ca = csimpm.get(Curso.class, idcursoant);
@@ -685,6 +720,7 @@ public class ListaAdmissaoController extends GenericForwardComposer {
         Intbox idaluno = (Intbox) mDialogAddLista.getFellow("ibidaluno");
         Textbox nome = (Textbox) mDialogAddLista.getFellow("txNome");
         Textbox numero = (Textbox) mDialogAddLista.getFellow("txNumero");
+        Intbox ano = (Intbox) mDialogAddLista.getFellow("ibanoi");
         Textbox bi = (Textbox) mDialogAddLista.getFellow("txBI");
         Textbox tel = (Textbox) mDialogAddLista.getFellow("txCont");
 
@@ -694,7 +730,8 @@ public class ListaAdmissaoController extends GenericForwardComposer {
 
         nome.setValue(todo.getNome());
         bi.setValue(todo.getNrBI());
-        tel.setValue(todo.getTelefone());
+        tel.setValue(todo.getContacto());
+        ano.setValue(todo.getAno());
         numero.setValue(todo.getNumero());
         idaluno.setValue(todo.getIdaluno());
         final Iterator<Comboitem> items1 = new ArrayList(((Combobox) mDialogAddLista.getFellow("cbTipoAdm")).getItems()).listIterator();
@@ -728,6 +765,30 @@ public class ListaAdmissaoController extends GenericForwardComposer {
         } else {
             cbt.setSelectedItem(cbt2);
             cbt.setText("Pos-Laboral");
+        }
+
+    }
+
+    public void onEliminarLista() {
+        formApagarLista.setParent(winmain);
+        formApagarLista.doModal();;
+    }
+
+    public void onBtnCanc() {
+        formApagarLista.detach();
+    }
+
+    public void onBtnApagar() {
+        int r = csimpm.updateQuery("delete from listaadmissao where ano =?", anoeliminar.getValue());
+        formApagarLista.detach();
+        if (r == 1) {
+            Clients.showNotification(r + " Registo foi eliminado", null, null, null, 3000);
+            setLB(0, 20);
+        } else if (r > 1) {
+            Clients.showNotification(r + " Registos foram eliminados", null, null, null, 3000);
+            setLB(0, 20);
+        } else {
+            Clients.showNotification("Nenhum registo foi eliminado", "warning", null, null, 0);
         }
 
     }
@@ -776,7 +837,7 @@ public class ListaAdmissaoController extends GenericForwardComposer {
 
     public boolean camposnulo() {
         if (txNome.getValue().equals("")
-                || txBI.getValue().equals("")
+                //|| txBI.getValue().equals("")
                 || txCont.getValue().equals("")
                 || cbCurso.getSelectedIndex() < 0
                 || cbTipoAdm.getSelectedIndex() < 0) {
@@ -854,12 +915,19 @@ public class ListaAdmissaoController extends GenericForwardComposer {
         Estudante estudante = mat.getEstudante();
         estudante
                 = csimpm.load(Estudante.class, estudante.getIdEstudante());
+        ((Combobox) win.getFellow("cbturno")).setButtonVisible(false);
+        if (estudante.getTurno() == 1) {
+            ((Combobox) win.getFellow("cbTurno")).setSelectedIndex(0);
+        } else {
+            ((Combobox) win.getFellow("cbTurno")).setSelectedIndex(1);
+        }
         Combobox cbcur = (Combobox) win.getFellow("cbcursocurrente");
         Bolsa bols = estudante.getBolsa();
         Long cursocurrente = estudante.getCursocurrente().getIdCurso();
         Long cursoingresso = estudante.getCursoingresso().getIdCurso();
         Estadocivil estadoc = estudante.getEstadoCivil();
         Pais escolap = estudante.getEscolaPais();
+        Provincia escolaprov = estudante.getEscolaprovincia();
         int nacionalidade = estudante.getNacionalidade().getIdPais();
         Viaingresso ving = estudante.getViaIngresso();
         Provincia provnat = estudante.getProvincia();
@@ -1042,6 +1110,18 @@ public class ListaAdmissaoController extends GenericForwardComposer {
                 citescolaPais = itemsescolaPais.next();
                 if (((Pais) citescolaPais.getValue()).getIdPais() == escolaPais) {
                     ((Combobox) win.getFellow("cbescolaPais")).setSelectedItem(citescolaPais);
+                    break;
+                }
+            }
+        }
+        if (escolaprov != null) {
+            Long escolaprovincia = escolaprov.getIdProvincia();
+            final Iterator<Comboitem> itemsescolaProv = new ArrayList(((Combobox) win.getFellow("cbescolaProvincia")).getItems()).listIterator();
+            Comboitem citescolaProv;
+            while (itemsescolaProv.hasNext()) {
+                citescolaProv = itemsescolaProv.next();
+                if (Objects.equals(((Provincia) citescolaProv.getValue()).getIdProvincia(), escolaprovincia)) {
+                    ((Combobox) win.getFellow("cbescolaProvincia")).setSelectedItem(citescolaProv);
                     break;
                 }
             }
@@ -1433,8 +1513,12 @@ public class ListaAdmissaoController extends GenericForwardComposer {
         } else {
             condpar.remove("curso");
             condcurso = " and la.curso.faculdade = :fac ";
-            //Users u = csimpm.get(Users.class, usr.getUtilizador());
-            Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+            Faculdade f;
+            if (cbfaculdade.isVisible()) {
+                f = csimpm.get(Faculdade.class, ((Faculdade) cbfaculdade.getSelectedItem().getValue()).getIdFaculdade());
+            } else {
+                f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+            }
             condpar.put("fac", f);
         }
         setLB(0, 20);
@@ -1444,7 +1528,7 @@ public class ListaAdmissaoController extends GenericForwardComposer {
         if (j == 20) {
             lbplm.setModel(new ListModelList<Listaadmissao>());
         }
-        List<Listaadmissao> li = csimpm.findByJPQueryFilter("from Listaadmissao la where 1=1" + condcurso + condnome + condnr + " order by la.nome", condpar, i, j);
+        List<Listaadmissao> li = csimpm.findByJPQueryFilter("from Listaadmissao la where 1=1" + condcurso + condnome + condano + condnr + " order by la.numero", condpar, i, j);
         final Iterator<Listaadmissao> items = li.iterator();
         Listaadmissao e;
         lbplm.setRows(lbplm.getItemCount() + li.size());
@@ -1463,159 +1547,241 @@ public class ListaAdmissaoController extends GenericForwardComposer {
         int i = lbplm.getItemCount();
         setLB(i, i + 20);
     }
-    
-        public void onUploadFile(ForwardEvent evt){
-         Button button = (Button)evt.getOrigin().getTarget();
-        
-         button.addEventListener("onUpload", new EventListener<UploadEvent>() {
-             @Override
-             @SuppressWarnings("empty-statement")
-             public void onEvent(UploadEvent event) throws Exception {
+
+    public void onUploadFile(ForwardEvent evt) {
+        Button button = (Button) evt.getOrigin().getTarget();
+        button.addEventListener("onUpload", new EventListener<UploadEvent>() {
+            @Override
+            @SuppressWarnings("empty-statement")
+            public void onEvent(UploadEvent event) throws Exception {
                 String alert = "";
                 Media media = event.getMedia();
                 janelaInformacao.setVisible(false);
-                boolean t,j = false,k = false;
-                
-                Hashtable<String,Integer> cursosCounter = new Hashtable<>();
-                  
-                List<Curso> cursos = csimpm.getAll(Curso.class);
-                
-                for (Curso curso : cursos){
-                    if (!cursosCounter.containsKey(curso.getAbreviatura())){
-                        cursosCounter.put(curso.getAbreviatura(),1);
-                    }
-                }
-                
+                boolean t, j = false, k = false;
+
+                Hashtable<String, Integer> cursosCounter = getLast();
+              //  Hashtable<String, Integer> cursosCounter = new Hashtable<>();
+
+//                List<Curso> cursos = csimpm.getAll(Curso.class);
+//
+//                for (Curso curso : cursos) {
+//                    if (!cursosCounter.containsKey(curso.getAbreviatura())) {
+//                        cursosCounter.put(curso.getAbreviatura(), 1);
+//                    }
+//                }
+
                 Transaction transacao = csimpm.getTransacao();
-                
+
                 try {
-                    transacao.begin();
-                  
-                    XSSFWorkbook wb = new XSSFWorkbook(media.getStreamData());
-                    XSSFSheet sheet = wb.getSheetAt(0);
-                        
+
+                    Date dano = new Date();
+                    Calendar cal = new GregorianCalendar();
+                    cal.setTime(dano);
+                    int ano = cal.get(Calendar.YEAR);
+                    Workbook wb = WorkbookFactory.create(media.getStreamData());
+                    Sheet sheet = wb.getSheetAt(0);
+
+                    double nota = 0;
+                    // double nrTelefone = 0;
+                    // double telefone = 0;
+                    int val = 0;
+                   // double nrTelefoneAlternativo = 0;
+
+                    //  String dataNasc = "";
+                    String cidade = "";
                     String nome = "";
                     String curso = "";
-                    String nrBI = "";
-                    double telefone = 0 ;
-                    int val = 0;
+                    //   String nrBI = "";
+                    //   String apelido = "";
+
                     t = false;
                     j = false;
-                    int a = 0;
-                    for (org.apache.poi.ss.usermodel.Row row : sheet){
-                       val = 0;
-                        if (t){
-                                for (Cell cell : row){
-                                   
-                                  switch(val){
-                                      case 0: nome = cell.getStringCellValue(); break;
-                                      case 1: curso = cell.getStringCellValue(); break;
-                                      case 2: nrBI = cell.getStringCellValue(); break;
-                                      case 3: telefone = cell.getNumericCellValue();break;
-                                  }
-                                  
-                                  if (val == 3){
-                                      
-                                        if (nrBI.length() ==13 || nrBI.length() == 9){
-                                            
-                                            String tel = (int)telefone +"";
-                                            if (tel.length() == 9){
-                                                
-                                                    Documento dd = new Documento();
-                                                    dd.setNrDocumento(nrBI);
-                                                    String sql = "from Curso c where c.abreviatura like \'%"+ curso.toUpperCase() +"%\'";
-                                                    Curso c = (Curso)csimpm.findEntByJPQuery(sql, null);
 
-                                                if (c != null){
-                                                        long  i = (long) telefone; 
-                                                       
-                                                        String nmec = "";
-                                                        int anoIngresso = Calendar.getInstance().get(Calendar.YEAR);
-                                                        String faculdade = c.getFaculdade().getCodigo();
-                                                        String codigoCurso = c.getCodigoCurso();
+                    transacao.begin();
 
-                                                        Integer cont = cursosCounter.get(c.getAbreviatura()); 
-                                                        
-                                                        if (cont.toString().length() == 1){
-                                                            nmec = anoIngresso+faculdade+codigoCurso+ "00"+cont;    
-                                                        }else if (cont.toString().length() == 2){
-                                                            nmec = anoIngresso+faculdade+codigoCurso+"0"+cont;    
-                                                        }
-                                                        
-                                                        ++cont;
-                                                        
-                                                        cursosCounter.put(c.getAbreviatura(),cont);
-                                                        
-                                                        Listaadmissao novoIngresso = new Listaadmissao();
-                                                        novoIngresso.setNome(nome);
-                                                        novoIngresso.setCurso(c);
-                                                        novoIngresso.setNrBI(nrBI);
-                                                        novoIngresso.setTelefone(i+"");
-                                                        novoIngresso.setNumero(nmec);
-                                                        
-                                                        csimpm.Saves(novoIngresso);
-                                                         val = -1;
-                                                }else{
-                                                   j = true;
-                                                   Clients.showNotification("Corrija o Curso do estudante :\n"+"["+nome+"] ",Clients.NOTIFICATION_TYPE_ERROR,null,null,2000);
-                                                   break;
-                                                }
-                                            }else{
-                                               j = true;
-                                               alert = "Corrija o numero de Telefone do estudante :\n"+"["+nome+"]"
-                                                       + "\n[NB: O numero de telefone deve conter 9 digitos] ";
-                                               Clients.showNotification(alert, Clients.NOTIFICATION_TYPE_WARNING, null, null, 2000);
-                                               break;
-                                            }
-                                        }else{
-                                            j = true;
-                                            alert = "Corrija o numero de Documento do estudante :\n"+"["+nome+"] "
-                                                    + "\n[NB: Em caso de BI o Numero de documento deve conter 13 digitos]"
-                                                    + "\n[NB: Em caso de Passaporte o documento deve conter 9 digitos]";
-                                            Clients.showNotification(alert, Clients.NOTIFICATION_TYPE_WARNING, null, null, 2000);
-                                            break;
+                    for (org.apache.poi.ss.usermodel.Row row : sheet) {
+                        val = 0;
+                        if (t) {
+                            for (Cell cell : row) {
+                                switch (val) {
+                                    case 0:
+                                        //  Messagebox.show(cell.getStringCellValue());
+                                        // ce ll.setCellType(Cell.CELL_TYPE_NUMERIC);
+//                                        nota = cell.getNumericCellValue();
+                                        cidade = cell.getStringCellValue();
+                                        break;
+//                                        nota = new Double(cell.getStringCellValue());
+//                                        break;
+                                    case 1:
+                                        nome = cell.getStringCellValue();
+                                        break;
+//                                        apelido = cell.getStringCellValue();
+//                                        break;
+                                    case 2:
+                                        curso = cell.getStringCellValue();
+                                        break;
+//                                        nome = cell.getStringCellValue();
+//                                        break;
+                                    case 3:
+                                        nota = new Double(cell.getNumericCellValue());
+                                        break;
+//                                        curso = cell.getStringCellValue();
+//                                        break;
+//                                    case 4:
+//                                        dataNasc = cell.getStringCellValue();
+//                                        break;
+//                                    case 5:
+//                                        cidade = cell.getStringCellValue();
+//                                        break;
+//                                    case 6:
+//                                        nrTelefone = Integer.parseInt(cell.getStringCellValue());
+//                                        break;
+//                                    case 7:
+//                                        nrTelefoneAlternativo = Integer.parseInt(cell.getStringCellValue());
+//                                        break;
+                                }
+
+                                if (val == 3) {
+
+                                    //  String tel = (int) nrTelefone + "";
+                                    String cursoabrev = curso;
+                                    if (curso.contains(" (Pos-Laboral)")) {
+                                        cursoabrev = cursoabrev.replace(" (Pos-Laboral)", "");
+                                    }
+                                    String sql = "from Curso c where lower(c.abreviatura) =  \'" + cursoabrev.toLowerCase() + "\'";
+                                    Curso c = (Curso) csimpm.findEntByJPQuery(sql, null);
+
+                                    if (c != null) {
+                                        // long i = (long) telefone;
+                                        String nmec = "";
+                                        int anoIngresso = Calendar.getInstance().get(Calendar.YEAR);
+                                        String faculdade = c.getFaculdade().getCodigo();
+                                        String codigoCurso = c.getCodigoCurso();
+
+                                        Integer cont = cursosCounter.get(c.getAbreviatura());
+                                        cont++;
+                                        if (cont.toString().length() == 1) {
+                                            nmec = anoIngresso + faculdade + codigoCurso + "00" + cont;
+                                        } else if (cont.toString().length() == 2) {
+                                            nmec = anoIngresso + faculdade + codigoCurso + "0" + cont;
                                         }
-                                  }
-                                    val++;
+
+                                        
+                                        cursosCounter.put(c.getAbreviatura(), cont);
+                                        //    String date[] = dataNasc.split("/");
+                                        //   Calendar d = new GregorianCalendar(Integer.parseInt(date[2]), Integer.parseInt(date[1]), Integer.parseInt(date[0]));
+
+                                        Listaadmissao novoIngresso = new Listaadmissao();
+
+                                        /*Dados do novo ingresso*/
+                                        novoIngresso.setNome(nome);
+                                        //    novoIngresso.setApelido(apelido);
+                                        //    novoIngresso.setTelefone("" + nrTelefone);
+                                        novoIngresso.setNotaAdmissao(nota);
+                                        novoIngresso.setCidade(cidade);
+                                        //    novoIngresso.setContacto(tel + "");
+                                        //   novoIngresso.setContactoAlternativo(nrTelefoneAlternativo + "");
+                                        //    novoIngresso.setDataNascimento(d.getTime());
+                                        novoIngresso.setCurso(c);
+                                        novoIngresso.setNumero(nmec);
+                                        novoIngresso.setAno(ano);
+                                        //validar se na base de dados nao existir turno 1 e 2
+                                        if (c.getTurno().getIdPeriodo() == 2 || curso.contains("(Pos-Laboral)")) {
+                                            novoIngresso.setTurno(2);
+                                        } else {
+                                            novoIngresso.setTurno(1);
+                                        }
+
+                                        /*Por padrao o estudante novo Inresso nao esta matriculado*/
+                                        novoIngresso.setMatriculado(false);
+//Messagebox.show(novoIngresso.getNumero());
+                                        csimpm.Saves(novoIngresso);
+                                        val = -1;
+                                    } else {
+                                        j = true;
+                                        Clients.showNotification("Corrija o Curso: " + curso + " do estudante:\n" + "[" + nome + "] ", Clients.NOTIFICATION_TYPE_WARNING, null, null, 10000);
+                                        break;
+                                    }
                                 }
-                                
-                                if (j){
-                                    break;
-                                }
+                                val++;
                             }
-                            else{
-                                t = true;
-                            }
+                        } else {
+                            t = true;
+                        }
+
+                        if (j) {
+                            break;
+                        }
+
                     }
-                  
-                    if (j){
+
+                    if (j) {
                         transacao.rollback();
-                    }else{
-                        Clients.showNotification("O ficheiro "+media.getName()+" foi importado com sucesso.", null, null, null, 2000);
+                    } else {
+                        Clients.showNotification("O ficheiro " + media.getName() + " foi importado com sucesso.", null, null, null, 2000);
                         transacao.commit();
                     }
-                } catch (Exception e) {
-                     Clients.showNotification("Ocorreu uma falha na Importacao do ficheiro "+media.getName(), Clients.NOTIFICATION_TYPE_ERROR, null, null, 3000);
-                     transacao.rollback();
-                }finally{
-                    if (j){
-                        while(!transacao.wasRolledBack());
-                    }else{
-                        while(!transacao.wasCommitted());
-                    }
+                } catch (IOException | InvalidFormatException | NumberFormatException e) {
+                    Clients.showNotification("Ocorreu uma falha na Importacao do ficheiro " + media.getName(), Clients.NOTIFICATION_TYPE_ERROR, null, null, 3000);
+                    transacao.rollback();
+                    j = true;
+                } finally {
+                    janelaInformacao.detach();
                 }
-             }
+                setLB(0, 20);
+                janelaInformacao.detach();
+            }
 
-         });
+        });
 
     }
-    
-    public void onClickApearInfo(){
-        janelaInformacao.setVisible(true);
-        janelaInformacao.doModal();
+
+    public void onClickApearInfo() {
+//        janelaInformacao.setVisible(true);
+//        janelaInformacao.doModal();
+        Executions.createComponents("matricula/importingresso.zul", winmain, null);
     }
-    
-    public void onSetFalseVisibility(ForwardEvent evt){
+
+    public void onCanlar() {
+        janelaInformacao.detach();
+    }
+
+    public void onSetFalseVisibility(ForwardEvent evt) {
         janelaInformacao.setVisible(false);
+    }
+    
+       private Hashtable<String, Integer> getLast(){
+    
+       List<Listaadmissao> la =  csimpm.getAll(Listaadmissao.class);
+       List<Curso> cursos = csimpm.getAll(Curso.class);
+       Hashtable<String, Integer> map = new Hashtable<>();
+       
+       // copia todos os cursos existentes para um dicionario e os inicia a zero
+       for (Curso c : cursos){
+           map.put(c.getAbreviatura(), 0);
+       }
+       
+       for (Listaadmissao l : la){
+           
+           if (l.getAno() == 2020){
+//               Messagebox.show(l.getAno()+"");
+//               Messagebox.show(l.getNome());
+                String abreviatura = l.getCurso().getAbreviatura();
+                Integer mapValue = map.get(abreviatura);
+                String n = getLastThree(l.getNumero());
+                Integer numero = Integer.parseInt(n);
+                if ( numero > mapValue  ){ 
+                    map.replace(abreviatura,numero);
+                }
+           }
+           
+       }
+       
+       return map;
+    }
+       
+    
+    private String getLastThree(String n){
+        return n.charAt(n.length()-3)+""+ n.charAt(n.length()-2) +""+ n.charAt(n.length()-1)+ "";
     }
 }

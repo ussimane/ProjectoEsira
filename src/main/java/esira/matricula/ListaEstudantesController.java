@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.commons.io.FilenameUtils;
 import org.zkoss.image.AImage;
 import org.zkoss.image.Image;
@@ -163,6 +164,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
             eq = EventQueues.lookup("rmatD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoP());
         } else {
+            usr = csimpm.get(Users.class, usr.getUtilizador());
             eq = EventQueues.lookup("mat" + usr.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
             eq.subscribe(getEventoMatE());
             eq = EventQueues.lookup("rmatD" + usr.getIdEstudante().getIdEstudante(), EventQueues.APPLICATION, true);
@@ -342,6 +344,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
         par.put("ide", user.getIdEstudante().getIdEstudante());
         Matricula ma = csimpm.findEntByJPQuery("select k from Matricula k where k.dataMatricula in (select max(m.dataMatricula) from Matricula m "
                 + "WHERE m.matriculaPK.idEstudante =:ide) and k.matriculaPK.idEstudante = :ide", par);
+       Messagebox.show(ma.getPeriodo()+"");
         if (ma == null) {
             Clients.showNotification("A sua matricula nao pode ser renovada. \n"
                     + "Provavelmente o estudante nao tem nenhuma nota", "warning", null, null, 0);
@@ -371,7 +374,10 @@ public class ListaEstudantesController extends GenericForwardComposer {
             }
         }
 
-        PlanificacaoAnoLectivo planificacaoAnoLectivo = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo", null);
+       Users up = csimpm.get(Users.class, usr.getUtilizador());
+             par.clear();
+            par.put("fac", up.getFaculdade());
+           PlanificacaoAnoLectivo planificacaoAnoLectivo = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo p where p.faculdade = :fac", par);
         if (planificacaoAnoLectivo != null) {
 //            if (dano.before(planificacaoAnoLectivo.getDataInicioMatricula())) {
 //                Clients.showNotification("Fora da Epoca de Matricula", "warning", null, null, 0);
@@ -489,19 +495,20 @@ public class ListaEstudantesController extends GenericForwardComposer {
         }
         Estudante estudante = mat.getEstudante();
         estudante = csimpm.load(Estudante.class, estudante.getIdEstudante());
-        par.clear();
-        par.put("ide", estudante);
-        Prescricao pre = csimpm.findEntByJPQuery("from Prescricao p where p.inscricaodisciplina.inscricao.idEstudante = :ide"
-                + " and p.estado is true", par);
-        if (pre != null) {
-            Clients.showNotification("O estudante prescreveu uma disciplina! So poderá Matricular depois de regularizar", "error", null, null, 0);
-            win.detach();
-        }
+       // par.clear();
+       // par.put("ide", estudante);
+       // Prescricao pre = csimpm.findEntByJPQuery("from Prescricao p where p.inscricaodisciplina.inscricao.idEstudante = :ide"
+      //          + " and p.estado is true", par);
+       // if (pre != null) {
+       //     Clients.showNotification("O estudante prescreveu uma disciplina! So poderá Matricular depois de regularizar", "error", null, null, 0);
+       //     win.detach();
+       // }
         Bolsa bols = estudante.getBolsa();
         Long cursocurrente = estudante.getCursocurrente().getIdCurso();
         Long cursoingresso = estudante.getCursoingresso().getIdCurso();
         Estadocivil estadoc = estudante.getEstadoCivil();
         Pais escolap = estudante.getEscolaPais();
+        Provincia escolaprov = estudante.getEscolaprovincia();
         int nacionalidade = estudante.getNacionalidade().getIdPais();
         Viaingresso ving = estudante.getViaIngresso();
         Provincia provnat = estudante.getProvincia();
@@ -521,7 +528,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
         Comboitem citcursocurrente;
         while (itemscursocurrente.hasNext()) {
             citcursocurrente = itemscursocurrente.next();
-            if (((Curso) citcursocurrente.getValue()).getIdCurso() == cursocurrente) {
+            if (Objects.equals(((Curso) citcursocurrente.getValue()).getIdCurso(), cursocurrente)) {
                 ((Combobox) win.getFellow("cbcursocurrente")).setSelectedItem(citcursocurrente);
                 break;
             }
@@ -599,7 +606,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
         Comboitem citprovincia;
         while (itemsprovincia.hasNext()) {
             citprovincia = itemsprovincia.next();
-            if (((Provincia) citprovincia.getValue()).getIdProvincia() == endereco.getProvincia().getIdProvincia()) {
+            if (Objects.equals(((Provincia) citprovincia.getValue()).getIdProvincia(), endereco.getProvincia().getIdProvincia())) {
                 ((Combobox) win.getFellow("cbprovinciaEndAL")).setSelectedItem(citprovincia);
                 break;
             }
@@ -613,7 +620,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
         Comboitem citprovincia2 = null;
         while (itemsprovincia2.hasNext()) {
             citprovincia2 = itemsprovincia2.next();
-            if (((Provincia) citprovincia2.getValue()).getIdProvincia() == enderecof.getProvincia().getIdProvincia()) {
+            if (Objects.equals(((Provincia) citprovincia2.getValue()).getIdProvincia(), enderecof.getProvincia().getIdProvincia())) {
                 ((Combobox) win.getFellow("cbprovinciaEndPF")).setSelectedItem(citprovincia2);
                 break;
             }
@@ -628,6 +635,18 @@ public class ListaEstudantesController extends GenericForwardComposer {
                 citescolaPais = itemsescolaPais.next();
                 if (((Pais) citescolaPais.getValue()).getIdPais() == escolaPais) {
                     ((Combobox) win.getFellow("cbescolaPais")).setSelectedItem(citescolaPais);
+                    break;
+                }
+            }
+        }
+        if (escolaprov != null) {
+            Long escolaprovincia = escolaprov.getIdProvincia();
+            final Iterator<Comboitem> itemsescolaProv = new ArrayList(((Combobox) win.getFellow("cbescolaProvincia")).getItems()).listIterator();
+            Comboitem citescolaProv;
+            while (itemsescolaProv.hasNext()) {
+                citescolaProv = itemsescolaProv.next();
+                if (Objects.equals(((Provincia) citescolaProv.getValue()).getIdProvincia(), escolaprovincia)) {
+                    ((Combobox) win.getFellow("cbescolaProvincia")).setSelectedItem(citescolaProv);
                     break;
                 }
             }
@@ -673,7 +692,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
             Comboitem citprovinciaAdmissao;
             while (itemsprovinciaAdmissao.hasNext()) {
                 citprovinciaAdmissao = itemsprovinciaAdmissao.next();
-                if (((Provincia) citprovinciaAdmissao.getValue()).getIdProvincia() == iex.getProvinciaAdmissao().getIdProvincia()) {
+                if (Objects.equals(((Provincia) citprovinciaAdmissao.getValue()).getIdProvincia(), iex.getProvinciaAdmissao().getIdProvincia())) {
                     ((Combobox) win.getFellow("cbprovinciaAdmissao")).setSelectedItem(citprovinciaAdmissao);
                     break;
                 }
@@ -685,7 +704,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
             Comboitem citTipou;
             while (itemsTipou.hasNext()) {
                 citTipou = itemsTipou.next();
-                if (citTipou.getLabel().toString().equals(imu.getTipouniversidade())) {
+                if (citTipou.getLabel().equals(imu.getTipouniversidade())) {
                     ((Combobox) win.getFellow("cbtipouniversidade")).setSelectedItem(citTipou);
                     break;
                 }
@@ -694,7 +713,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
             Comboitem citpaisUniversidade;
             while (itemspaisUniversidade.hasNext()) {
                 citpaisUniversidade = itemspaisUniversidade.next();
-                if (((Pais) citpaisUniversidade.getValue()).getIdPais() == imu.getPaisUniversidade().getIdPais()) {
+                if (Objects.equals(((Pais) citpaisUniversidade.getValue()).getIdPais(), imu.getPaisUniversidade().getIdPais())) {
                     ((Combobox) win.getFellow("cbpaisUniversidade")).setSelectedItem(citpaisUniversidade);
                     break;
                 }
@@ -718,7 +737,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
             Comboitem citbolsa;
             while (itemsbolsa.hasNext()) {
                 citbolsa = itemsbolsa.next();
-                if (((Bolsa) citbolsa.getValue()).getIdBolsa() == bolsa) {
+                if (Objects.equals(((Bolsa) citbolsa.getValue()).getIdBolsa(), bolsa)) {
                     ((Combobox) win.getFellow("cbbolsa")).setSelectedItem(citbolsa);
                     break;
                 }
@@ -744,7 +763,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
             Comboitem citprovinciapr;
             while (itemsprovinciapr.hasNext()) {
                 citprovinciapr = itemsprovinciapr.next();
-                if (((Provincia) citprovinciapr.getValue()).getIdProvincia() == prof.getProvinciapr().getIdProvincia()) {
+                if (Objects.equals(((Provincia) citprovinciapr.getValue()).getIdProvincia(), prof.getProvinciapr().getIdProvincia())) {
                     ((Combobox) win.getFellow("cbprovinciapr")).setSelectedItem(citprovinciapr);
                     break;
                 }
@@ -778,7 +797,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
         Comboitem cittipo;
         while (itemstipo.hasNext()) {
             cittipo = itemstipo.next();
-            if (((Tipodocumento) cittipo.getValue()).getIdTipo() == doc.getTipo().getIdTipo()) {
+            if (Objects.equals(((Tipodocumento) cittipo.getValue()).getIdTipo(), doc.getTipo().getIdTipo())) {
                 ((Combobox) win.getFellow("cbtipo")).setSelectedItem(cittipo);
                 break;
             }
@@ -786,7 +805,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
         //bilhete
         List<Arquivoestudante> lam = csimpm.findByJPQuery("from Arquivoestudante am where"
                 + " am.tipo=1 and am.idEstudante = :ide", par);
-        List<Media> lm = new ArrayList<Media>();
+        List<Media> lm = new ArrayList<>();
         for (Arquivoestudante am2 : lam) {
             String sss = UserAutentic.getPathR(am2.getTipo().toString()) + estudante.getNrEstudante() + am2.getNomearquivo();
             //File f = new File(ss);
@@ -806,7 +825,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
         //Certificado
         List<Arquivoestudante> lam2 = csimpm.findByJPQuery("from Arquivoestudante am where"
                 + " am.tipo=2 and am.idEstudante = :ide", par);
-        List<Media> lm2 = new ArrayList<Media>();
+        List<Media> lm2 = new ArrayList<>();
         for (Arquivoestudante am2 : lam2) {
             String sss = UserAutentic.getPathR(am2.getTipo().toString()) + estudante.getNrEstudante() + am2.getNomearquivo();
             //File f = new File(ss);
@@ -827,8 +846,8 @@ public class ListaEstudantesController extends GenericForwardComposer {
             par.put("mat", mat);
             List<Arquivomatricula> lam3 = csimpm.findByJPQuery("from Arquivomatricula am where"
                     + " am.matricula = :mat", par);
-            List<Arquivo> lm3 = new ArrayList<Arquivo>();
-            List<Arquivo> lm4 = new ArrayList<Arquivo>();
+            List<Arquivo> lm3 = new ArrayList<>();
+            List<Arquivo> lm4 = new ArrayList<>();
             for (Arquivomatricula am3 : lam3) {
                 String sss = UserAutentic.getPathR("3") + estudante.getNrEstudante() + mat.getMatriculaPK().getAno() + am3.getNomearquivo();
                 //File f = new File(ss);
@@ -934,7 +953,7 @@ public class ListaEstudantesController extends GenericForwardComposer {
         par.put("fac", f);
         List<Matriculaanulada> lma = csimpm.findByJPQuery("from Matriculaanulada ma where ma.dataconfirmacao is not null and ma.estado is true and"
                 + " ma.matricula.curso.faculdade = :fac order by ma.dataAnulacao desc", par);
-        return new ListModelList<Matriculaanulada>(lma);
+        return new ListModelList<>(lma);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////

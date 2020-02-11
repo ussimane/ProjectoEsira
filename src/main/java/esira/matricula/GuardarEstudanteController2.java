@@ -995,6 +995,11 @@ public class GuardarEstudanteController2 extends GenericForwardComposer {
             cbescolaPais.getText();
         }
         estudante.setEscolaPais((Pais) cbescolaPais.getSelectedItem().getValue());
+        if (cbescolaProvincia.getSelectedItem() == null) {
+            cbescolaProvincia.setText("");
+            cbescolaProvincia.getText();
+        }
+        estudante.setEscolaprovincia((Provincia) cbescolaProvincia.getSelectedItem().getValue());
         if (rgNuni.isChecked()) {
             estudante.setPrimeiraUniversidade(tbprimeiraUniversidade.getText());
         } else {
@@ -1312,7 +1317,7 @@ public class GuardarEstudanteController2 extends GenericForwardComposer {
                     estudante.setNrEstudante(nrmeca.getValue());
                 }
             }
-            estudante.setAnoIngresso(ano);
+            estudante.setAnoIngresso(ibano.getValue());
 
             estudante.setNivelFrequencia(1);
             //estudante.setArquivoestudanteList(null);
@@ -1445,27 +1450,27 @@ public class GuardarEstudanteController2 extends GenericForwardComposer {
                 ((Button) mDialogMatricula.getParent().getFellow("btnInsc")).setDisabled(false);
             }
             final Long id = estudante.getIdEstudante();
-            if (!usr.getUestudante() && ((estudante.getTransferido() != null && estudante.getTransferido().intValue() == 0)
-                    || (estudante.getMudancac() != null && estudante.getMudancac().intValue() == 0))) {
-                Messagebox.show("Registar a Equivalência das Disciplinas", "", Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
-                        new EventListener() {
-                            @Override
-                            public void onEvent(Event evet) throws InterruptedException {
-                                switch (((Integer) evet.getData()).intValue()) {
-                                    case Messagebox.YES:
-                                        Window win = (Window) Executions.createComponents("/inscricao/inscricaoequivalencia.zul", mDialogMatricula, null);
-                                        ((Textbox) win.getFellow("est")).setText(id + "");
-                                        ((Button) win.getFellow("btnCnf")).setVisible(false);
-                                        ((Button) win.getFellow("btnRj")).setVisible(false);
-                                        win.doModal();
-                                        break;
-                                    case Messagebox.NO:
-                                        mDialogMatricula.detach();
-                                        return;
-                                }
-                            }
-                        });
-            }
+//            if (!usr.getUestudante() && ((estudante.getTransferido() != null && estudante.getTransferido().intValue() == 0)
+//                    || (estudante.getMudancac() != null && estudante.getMudancac().intValue() == 0))) {
+//                Messagebox.show("Registar a Equivalência das Disciplinas", "", Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
+//                        new EventListener() {
+//                            @Override
+//                            public void onEvent(Event evet) throws InterruptedException {
+//                                switch (((Integer) evet.getData()).intValue()) {
+//                                    case Messagebox.YES:
+//                                        Window win = (Window) Executions.createComponents("/inscricao/inscricaoequivalencia.zul", mDialogMatricula, null);
+//                                        ((Textbox) win.getFellow("est")).setText(id + "");
+//                                        ((Button) win.getFellow("btnCnf")).setVisible(false);
+//                                        ((Button) win.getFellow("btnRj")).setVisible(false);
+//                                        win.doModal();
+//                                        break;
+//                                    case Messagebox.NO:
+//                                        mDialogMatricula.detach();
+//                                        return;
+//                                }
+//                            }
+//                        });
+//            }
             Messagebox.show("Pretende realizar inscricao", "", Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
                     new EventListener() {
                         @Override
@@ -1510,6 +1515,7 @@ public class GuardarEstudanteController2 extends GenericForwardComposer {
             }
             estudante.setMatriculaList(null);
             estudante.setArquivoestudanteList(null);
+            estudante.setIngressoexameadmissao(null);
             csimpm.update(estudante);
             i = 0;
             for (Arquivoestudante arq2 : larqe) {
@@ -1635,27 +1641,27 @@ public class GuardarEstudanteController2 extends GenericForwardComposer {
                 }
             }
             final Long id = mat.getEstudante().getIdEstudante();
-            if (!usr.getUestudante() && ((estudante.getTransferido() != null && estudante.getTransferido().intValue() == 0)
-                    || (estudante.getMudancac() != null && estudante.getMudancac().intValue() == 0))) {
-                Messagebox.show("Registar a Equivalência das Disciplinas", "", Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
-                        new EventListener() {
-                            @Override
-                            public void onEvent(Event evet) throws InterruptedException {
-                                switch (((Integer) evet.getData()).intValue()) {
-                                    case Messagebox.YES:
-                                        Window win = (Window) Executions.createComponents("/inscricao/inscricaoequivalencia.zul", mDialogMatricula, null);
-                                        ((Textbox) win.getFellow("est")).setText(id + "");
-                                        ((Button) win.getFellow("btnCnf")).setVisible(false);
-                                        ((Button) win.getFellow("btnRj")).setVisible(false);
-                                        win.doModal();
-                                        break;
-                                    case Messagebox.NO:
-                                        mDialogMatricula.detach();
-                                        return;
-                                }
-                            }
-                        });
-            }
+//            if (!usr.getUestudante() && ((estudante.getTransferido() != null && estudante.getTransferido().intValue() == 0)
+//                    || (estudante.getMudancac() != null && estudante.getMudancac().intValue() == 0))) {
+//                Messagebox.show("Registar a Equivalência das Disciplinas", "", Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
+//                        new EventListener() {
+//                            @Override
+//                            public void onEvent(Event evet) throws InterruptedException {
+//                                switch (((Integer) evet.getData()).intValue()) {
+//                                    case Messagebox.YES:
+//                                        Window win = (Window) Executions.createComponents("/inscricao/inscricaoequivalencia.zul", mDialogMatricula, null);
+//                                        ((Textbox) win.getFellow("est")).setText(id + "");
+//                                        ((Button) win.getFellow("btnCnf")).setVisible(false);
+//                                        ((Button) win.getFellow("btnRj")).setVisible(false);
+//                                        win.doModal();
+//                                        break;
+//                                    case Messagebox.NO:
+//                                        mDialogMatricula.detach();
+//                                        return;
+//                                }
+//                            }
+//                        });
+//            }
 
         }
         //limpar(tbimg);

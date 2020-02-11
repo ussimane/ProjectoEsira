@@ -123,8 +123,9 @@
                            par.clear();
                              par.put("pk",((esira.domain.Inscricaodisciplina)self.getParent().getValue()).getInscricaodisciplinaPK());
                              esira.domain.Inscricaodisciplina insc = csimp.findEntByJPQuery("from Inscricaodisciplina m where m.inscricaodisciplinaPK = :pk",par); 
-                                Label l = new Label();
-                                l.setValue(insc.getDisciplina().getNome()+" - "+insc.getDisciplina().getNivel()+"º Ano - "+insc.getDisciplina().getSemestre()+"º Sem - "+insc.getDisciplina().getCredito()+" Credito");
+                             esira.domain.Disciplina dl = csimp.get(esira.domain.Disciplina.class,insc.getDisciplina().getIdDisc());
+                              Label l = new Label();
+                                l.setValue(dl.getNome()+" - "+dl.getNivel()+"º Ano - "+dl.getSemestre()+"º Sem - "+dl.getCredito()+" Credito "+dl.getCurso().getAbreviatura()+"-"+dl.getPlanoc());
                                 l.setParent(self);
                                 if(!insc.getEstado()){
                                 l.setStyle("text-decoration:line-through");
@@ -216,7 +217,7 @@
                                   b.setSclass("button2 small");
                                   b.addForward("onClick","self","onEditar");
                                   b.setParent(self);
-                                }
+                                } 
                             }                         
                         ]]></attribute> 
                         </listcell>
@@ -235,7 +236,7 @@
         
             });
         </script>
-        <window id="winAddInscricao" visible="false" apply="esira.inscricao.InscricaoController"
+        <window id="winAddInscricao" sizable="true" visible="false" apply="esira.inscricao.InscricaoController"
                 width="80%" contentStyle="overflow:auto" sclass="formNovo" >
             <script type="text/javascript"><![CDATA[
 		zk.afterLoad('zul.tab', function () {
@@ -322,13 +323,15 @@
                                             </div>
                                         </hlayout>
                                     </row>
-                                    <row>
-                                        <hlayout vflex="1" hflex="1" sclass="second-layout">
-                                            <div sclass="description-area" height="100%">
+                                    <row style="margin: auto" >
+                                        <hlayout  vflex="1" hflex="1" sclass="second-layout">
+                                            <div  sclass="description-area" height="100%">
                                                 <label value="Curso *" />
                                             </div>
-                                            <div sclass="description-area" height="100%">
-                                                <label hflex="1" id="lbcurso" value="" />
+                                            <div sclass="description-area" height="200%">
+                                                <label id="lbcurso" value="" />.
+                                                <intbox visible="false" hflex="1" id="idcurso" />
+                                                <intbox hflex="1" visible="false" id="idplano" />
                                             </div>
                                         </hlayout>
                                     </row>
@@ -349,7 +352,7 @@
                                                 <label value="Sexo *" />
                                             </div>
                                             <div sclass="description-area" height="100%">
-                                                <label id="lbsexo" />
+                                                <label id="lbsexo" />.
                                             </div>
                                         </hlayout>
                                     </row>
@@ -359,7 +362,7 @@
                                                 <vbox hflex="1" width="100%">
                                                     <listbox id="discEst" hflex="1" sclass="mylitem4 mylitem5" oddRowSclass="non-odd" rows="4" width="98%" checkmark="true" height="100%">
                                                         <listhead>
-                                                            <listheader height="1%" label="Disciplinas Obrigatórias"/>                                                                         
+                                                            <listheader height="1%" label="Disciplinas disponíveis"/>                                                                         
                                                         </listhead>
                                                         <template name="model" >
                                                             <listitem value="${each}">
@@ -369,7 +372,24 @@
                                                             </listitem>
                                                         </template>
                                                     </listbox>
-                                                    <listbox id="discEstOp" hflex="1" sclass="mylitem4 mylitem5" oddRowSclass="non-odd" rows="4" width="100%" checkmark="true" height="100%">
+                                                    <label style="color:blue" value="Necessitando, pode adicionar disciplinas de outros Cursos ou Curriculos" />
+                                                    <hbox width="98%" hflex="1" id="hlayout">
+                                                        <image src="/icon/search.png"/>
+                                                        <combobox hflex="1" id="cbcursoI" forward="onSelect=onSelectcbcursoI" value="-curso-" readonly="true" tooltiptext="Curso" model="${$composer.cursoModel}" autodrop="true" >
+<!--                                                            <attribute name="onCreate"><![CDATA[
+                            if((self.getModel()!=null) && self.getModel().getSize()>0){
+                               self.setSelectedIndex(0);
+                            }                           
+                        ]]></attribute> -->
+                                                            <comboitem label="${each.nome}"/>
+                                                        </combobox>
+                                                        <combobox hflex="1" id="cbPlanoD" forward="onSelect=onSelectcbPlanoD" readonly="true" width="150px" value="-Plano curric.-" buttonVisible="true" autodrop="true" mold="rounded"/>
+ 
+                                                        <combobox hflex="1" readonly="true" forward="onSelect=onSelectcbDisc" id="cbDisc" value="-Disciplina-" tooltiptext="Disciplina" autodrop="true" >
+                                                            <comboitem label="${each.nome}"/>
+                                                        </combobox>
+                                                    </hbox>
+                                                    <listbox id="discEstOp" visible="false" hflex="1" sclass="mylitem4 mylitem5" oddRowSclass="non-odd" rows="4" width="100%" checkmark="true" height="100%">
                                                         <listhead>
                                                             <listheader label="Disciplinas Opcionais"/>                                                           
                                                         </listhead>
@@ -427,20 +447,30 @@
                                     <column hflex="1" vflex="1" />
                                 </columns> 
                                 <rows>
+                                    <row>
+                                        <hlayout vflex="1" hflex="1" sclass="second-layout">
+                                            <div sclass="description-area" height="100%">
+                                                <label value="Histórico de prescrições:" />
+                                            </div>
+                                            <div sclass="description-area" height="100%">
+                                                <label id="lbprescricao" value="" width="98%" style="color:red;"/>.
+                                            </div>
+                                        </hlayout>
+                                    </row>
                                     <row id="rwTaxanM" visible="false">
                                         <hlayout vflex="1" hflex="1" sclass="second-layout">
                                             <div sclass="description-area" height="100%">
-                                                <label value="Taxa Normal de Matricula:" /> 
+                                                <label value="Taxa Normal de Inscriçáo:" /> 
                                             </div>
                                             <div sclass="description-area" height="100%">
-                                                <label id="lbtaxaInscricao" value="" width="98%" style="color:red;"/>
+                                                <label id="lbtaxaInscricao" value="" width="98%" style="color:red;"/>.
                                             </div>
                                         </hlayout>
                                     </row>
                                     <row id="rwTaxaeM" visible="false">
                                         <hlayout vflex="1" hflex="1" sclass="second-layout">
                                             <div sclass="description-area" height="100%">
-                                                <label value="Taxa de Matricula para Estudante Estrangeiro:" />
+                                                <label value="Taxa de Inscriçáo para Estudante Estrangeiro:" />
                                             </div>
                                             <div sclass="description-area" height="100%">
                                                 <label id="lbtaxaInscricaoE" value="" width="98%" style="color:red;"/>
@@ -453,7 +483,7 @@
                                                 <label value="Taxa de Multa 2o Período:" />
                                             </div>
                                             <div sclass="description-area" height="100%">
-                                                <label id="lbtaxaMulta15dias" value="" width="98%" style="color:red;"/>
+                                                <label id="lbtaxaMulta15dias" value="" width="98%" style="color:red;"/>.
                                             </div>
                                         </hlayout>
                                     </row>
@@ -463,7 +493,7 @@
                                                 <label value="Taxa de Multa 3o Período:" />
                                             </div>
                                             <div sclass="description-area" height="100%">
-                                                <label id="lbtaxaMulta30dias" value="" width="98%" style="color:red;"/>
+                                                <label id="lbtaxaMulta30dias" value="" width="98%" style="color:red;"/>.
                                             </div>
                                         </hlayout>
                                     </row>
@@ -488,7 +518,7 @@
                                                 <label value="Total :" />
                                             </div>
                                             <div sclass="description-area" height="100%">
-                                                <label id="lbtotal" value="" width="98%"/>
+                                                <label id="lbtotal" value="" width="98%"/>.
                                             </div>
                                         </hlayout>
                                     </row>
@@ -547,7 +577,8 @@
                                                 </button> 
                                             </div>
                                             <div sclass="description-area" style="background-image:url('../images/profilev.png');border:1px solid #ddd;">
-                                                <textbox style="border:none;background: transparent;position: absolute" width="0px" height="0px" id="tbimg4" constraint="no Empty: Por favor anexar Comprovativo de Pagamento!"/>
+                                                <textbox style="border:none;background: transparent;position: absolute" width="0px" height="0px" id="tbimg4"/>
+                                                <!--constraint="no Empty: Por favor anexar Comprovativo de Pagamento!"/>-->
                                                 <listbox span="true"  sizedByContent="true" style="overflow:auto" height="100%" id="lbimg" >
                                                     <listhead  sizable="true">
                                                         <listheader label="Numero de recibo" align="left"/>
@@ -722,6 +753,9 @@
     <script type="text/javascript">
         zk.afterMount(function() {
         jq("$combEstInsc").find("input").Watermark(".Pesquise ou seleccione um Estudante","gray");
+        jq("$cbcursoI").find("input").Watermark("curso","gray");
+        jq("$cbPlanoD").find("input").Watermark("plano curric","gray");
+        jq("$cbDisc").find("input").Watermark("Disciplina","gray");
         });
     </script>
 </zk>

@@ -263,7 +263,7 @@
                                     <label value="Nome Completo" />
                                 </div>
                                 <div sclass="description-area" height="100">
-                                    <label id="nomee"/>
+                                    <label id="nomee"/>.
                                 </div>
                             </hlayout>
                         </row>
@@ -273,11 +273,11 @@
                                     <label value="Curso de Ingresso" />
                                 </div>
                                 <div sclass="description-area" height="100">
-                                    <label id="cingresso"/>
+                                    <label id="cingresso"/>.
                                 </div>
                             </hlayout>
                         </row>
-                       <!-- <row>
+                        <!-- <row>
                             <hlayout vflex="1" hflex="1" sclass="second-layout">
                                 <div sclass="description-area" height="100%">
                                     <label value="Curso Ingresso" />
@@ -295,7 +295,7 @@
                                     <label value="Curso Currente" />
                                 </div> 
                                 <div sclass="description-area" height="100%">
-                                    <combobox hflex="1" id="cbcurso2" readonly="true" tooltiptext="Curso" model="${$composer.cursocModel}" forward="onCreate=onCreatCbcurso2"  autodrop="true" >
+                                    <combobox hflex="1" id="cbcurso2" readonly="true" tooltiptext="Curso" model="${$composer.listaCursoModel}" forward="onCreate=onCreatCbcurso2"  autodrop="true" >
                                         <comboitem label="${each.nome}"/>
                                     </combobox>
                                 </div>
@@ -325,8 +325,8 @@
             </div>
                       
         </window> 
-         <window id="winNivel" border="none" visible="false" apply="esira.matricula.ListaEstudantesMatriculadosController"
-                width="50%" contentStyle="overflow:auto" sclass="formNovo" >
+        <window id="winNivel" border="none" visible="false" apply="esira.matricula.ListaEstudantesMatriculadosController"
+                 width="50%" contentStyle="overflow:auto" sclass="formNovo" >
          
             
             <div width="98%" sclass="row-custimized criteriaPad button-blue">
@@ -354,9 +354,9 @@
                                 <div sclass="description-area" height="100">
                                     <label value="Nivel" />
                                 </div>
-                               <div sclass="description-area" height="100">
+                                <div sclass="description-area" height="100">
                                     <intbox id="ibnivel" constraint=" no Empty: Introduza o Numero da turma!"/>
-                               </div>
+                                </div>
                             </hlayout>
                         </row>
                     </rows>
@@ -365,6 +365,43 @@
                     <hbox >
                         <button autodisable="self" sclass="mybutton button blue medium" id="btnSaveNivel" forward="onClick=onSalvarNivel" label="Aceitar"  mold="trendy" />
                         <button autodisable="self" sclass="mybutton button medium" id="btnCancNivel" forward="onClick=onBtnCancNivel" label="Cancelar"  mold="trendy" />
+                    </hbox>
+                </div>
+                            
+            </div>
+                      
+        </window>
+        <window id="winMot" border="none" visible="false" apply="esira.matricula.ListaEstudantesMatriculadosController"
+                 width="50%" contentStyle="overflow:auto" sclass="formNovo" >
+         
+            
+            <div width="98%" sclass="row-custimized criteriaPad button-blue">
+                <grid>
+                    <columns sizable="true">
+                        <column hflex="1" vflex="1" align="left" />
+                    </columns>
+                    <rows>
+                        <row visible="false">
+                            <intbox id="ibidest"/>
+                            <intbox id="anomat"/>
+                        </row>
+                        <row>
+                            <hlayout 
+                                sclass="second-layout">
+                                <div sclass="description-area" height="100%">
+                                    <label  value="Observações:"/>
+                                </div>
+                                <div sclass="description-area" height="98%">
+                                    <textbox id="txMotivo" rows="5" width="98%"   />
+                                </div>
+                            </hlayout>
+                        </row>
+                    </rows>
+                </grid>
+                <div align="center">
+                    <hbox >
+                        <button autodisable="self" sclass="mybutton button blue medium" forward="onClick=onRejeitarMat" label="Aceitar"  mold="trendy" />
+                        <button autodisable="self" sclass="mybutton button medium" forward="onClick=onFecharmot" label="Cancelar"  mold="trendy" />
                     </hbox>
                 </div>
                             

@@ -5,6 +5,7 @@
 package esira.matricula;
 
 import ExcelExport.BeanToExcel;
+import com.itextpdf.text.DocumentException;
 import entidade.Arquivo;
 import esira.domain.Arquivoestudante;
 import esira.domain.Arquivomatricula;
@@ -28,6 +29,8 @@ import esira.domain.Inscricaodisciplina;
 import esira.domain.Listaadmissao;
 import esira.domain.Matricula;
 import esira.domain.MatriculaPK;
+import esira.domain.Motivomat;
+import esira.domain.Notificacao;
 import esira.domain.Pais;
 import esira.domain.PlanificacaoAnoLectivo;
 import esira.domain.Planocurricular;
@@ -36,6 +39,8 @@ import esira.domain.Profissao;
 import esira.domain.Provincia;
 import esira.domain.Tipodocumento;
 import esira.domain.Users;
+import esira.domain.Validacaopendente;
+import esira.domain.ValidacaopendentePK;
 import esira.domain.Viaingresso;
 import esira.service.CRUDService;
 import esira.service.UserAutentic;
@@ -57,6 +62,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JRExporterParameter;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -64,6 +70,7 @@ import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import net.sf.jasperreports.engine.export.JRPdfExporter;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.mail.EmailException;
 import org.zkoss.image.AImage;
 import org.zkoss.lang.Strings;
 import org.zkoss.util.media.AMedia;
@@ -122,9 +129,9 @@ public class ListaEstudantesMatriculadosController extends GenericForwardCompose
     private Listbox lbEstudantes;
     private ListModel<Matricula> listEstudanteModel;
     private ListModel<Curso> listaCursoModel;
-    Window winlestudantes, mDialogMatricula, win, winTurma, winPlano;
+    Window winlestudantes, mDialogMatricula, win, winTurma, winPlano, winMot;
     private Intbox ibPAno;
-    private Textbox txAno;
+    private Textbox txAno, txMotivo;
     Button btnProcurar;
     // List<Estudante> userList = new ArrayList<Estudante>(csimpm.getAll(Matricula.class));
     List listaM;
@@ -146,7 +153,7 @@ public class ListaEstudantesMatriculadosController extends GenericForwardCompose
     Textbox txProcurar, txProcNrmec;
     Map<String, Object> condpar = new HashMap<String, Object>();
     Combobox cbcurso, cbcurso2, cbTurno, cbplano;
-    private Intbox ibProcAno, anoi, ide, ibturma;
+    private Intbox ibProcAno, anoi, ide, ibturma, ibidest, anomat;
     private Button btv;
     private Checkbox chturma;
     Menuitem manoi;
@@ -174,14 +181,18 @@ public class ListaEstudantesMatriculadosController extends GenericForwardCompose
             setLB(0, 20);
         }
     }
-    
-    public void onSIndexCbcurso(){
-      if(cbcurso.getModel()!=null&&cbcurso.getModel().getSize()>0)cbcurso.setSelectedIndex(0);
+
+    public void onSIndexCbcurso() {
+        if (cbcurso.getModel() != null && cbcurso.getModel().getSize() > 0) {
+            cbcurso.setSelectedIndex(0);
+        }
     }
-    public void onCreatCbcurso2(){
-      if(cbcurso2.getModel()!=null&&cbcurso2.getModel().getSize()>0)cbcurso2.setSelectedIndex(0);
+
+    public void onCreatCbcurso2() {
+        if (cbcurso2.getModel() != null && cbcurso2.getModel().getSize() > 0) {
+            cbcurso2.setSelectedIndex(0);
+        }
     }
-    
 
     public void onSetQueueEstMat() {
         //Users u = csimpm.get(Users.class, usr.getUtilizador());
@@ -281,10 +292,15 @@ public class ListaEstudantesMatriculadosController extends GenericForwardCompose
 //    }
     public ListModel<Curso> getListaCursoModel() {
         //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        List<Curso> lc = null;
         par.clear();
-        Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
-        par.put("fac", f);
-        List<Curso> lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
+        if (usr.getFaculdade().getLocalizacao() == null) {
+            lc = csimpm.getAll(Curso.class);
+        } else {
+            Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+            par.put("fac", f);
+            lc = csimpm.findByJPQuery("from Curso c where c.faculdade = :fac", par);
+        }
         return listaCursoModel = new ListModelList<Curso>(lc);
     }
 
@@ -297,20 +313,108 @@ public class ListaEstudantesMatriculadosController extends GenericForwardCompose
         return listaCursoModel = new ListModelList<Curso>(lc);
     }
 
-    public void onInvalidar(final ForwardEvent event) throws Exception {
+//    public void onInvalidar(final ForwardEvent event) throws Exception {
+//        Messagebox.show("Invalidar?", "Confirmação", Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
+//                new EventListener() {
+//                    @Override
+//                    public void onEvent(Event evet) {
+//                        switch (((Integer) evet.getData()).intValue()) {
+//                            case Messagebox.YES:
+//                                Listitem litem = (Listitem) event.getOrigin().getTarget().getParent().getParent().getParent();
+//                                Matricula todo = (Matricula) litem.getValue();
+//                                if (todo.getPeriodo() == null) {
+//                                    ((ListModelList) lbEstudantes.getModel()).remove(todo);
+//                                    csimpm.delete(todo);
+//                                    Clients.showNotification(
+//                                            " Matricula Rejeitada", null, null, null, 1000);
+//                                } else {
+//                                    todo.setEstado(false);
+//                                    csimpm.update(todo);
+//                                    ((ListModelList) lbEstudantes.getModel()).remove(todo);
+//                                    Clients.showNotification(
+//                                            " Matricula Rejeitada", null, null, null, 1000);
+//                                }
+//                                break;
+//                            case Messagebox.NO:
+//                                return;
+//                        }
+//                    }
+//                });
+//    }
+    public void onInvalidar(ForwardEvent event) throws IOException {
+        Listitem litem = (Listitem) event.getOrigin().getTarget().getParent().getParent().getParent();
+        Matricula todo = (Matricula) litem.getValue();
+        ((Intbox) winMot.getFellow("ibidest")).setValue(new Long(todo.getMatriculaPK().getIdEstudante()).intValue());
+        ((Intbox) winMot.getFellow("anomat")).setValue(todo.getMatriculaPK().getAno());
+        winMot.setParent(winlestudantes);
+        winMot.setTitle("Mudar a turma do estudante");
+        winMot.doModal();
+        ((Textbox) winMot.getFellow("txMotivo")).setText("A sua matricula foi rejeitada.\n Os seus dados estão incorrectos");
+    }
+
+    public void onFecharmot() {
+        winMot.detach();
+    }
+
+    public void onRejeitarMat() {
         Messagebox.show("Invalidar?", "Confirmação", Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
                 new EventListener() {
                     @Override
-                    public void onEvent(Event evet) {
+                    public void onEvent(Event evet) throws InterruptedException, IOException, EmailException {
                         switch (((Integer) evet.getData()).intValue()) {
                             case Messagebox.YES:
-                                Listitem litem = (Listitem) event.getOrigin().getTarget().getParent().getParent().getParent();
-                                Matricula todo = (Matricula) litem.getValue();
-                                todo.setEstado(false);
-                                csimpm.update(todo);
-                                ((ListModelList) lbEstudantes.getModel()).remove(todo);
-                                Clients.showNotification(
-                                        " Matricula Rejeitada", null, null, null, 1000);
+                                final MatriculaPK mpk = new MatriculaPK(ibidest.getValue().longValue(), anomat.getValue());
+                                par.clear();
+                                par.put("ide", mpk);
+                                final Users u = csimpm.get(Users.class, usr.getUtilizador());
+//                                Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+                                final Matricula mat = (Matricula) csimpm.findEntByJPQuery("from Matricula m where m.matriculaPK=:ide", par);
+//                                if (tipov.getValue() == 2) {
+//                                    Notificacao n = new Notificacao(new Date());
+//                                    n.setMsg(txMotivoR.getText());
+//                                    n.setIdFuncionario(mat.getFuncionario());
+//                                    csimpm.Save(n);
+//                                    csimpm.delete(mat);
+//                                } else {
+                                mat.setFuncionario(u.getIdFuncionario());
+                                mat.setConfirmacao(new Date());
+                                mat.setEmailenviado(false);
+                                mat.setEstado(false);
+                                csimpm.update(mat);
+                                Motivomat mm = new Motivomat();
+                                mm.setMatriculaPK(mat.getMatriculaPK());
+                                mm.setMotivo(txMotivo.getText());
+                                mm.setMatricula(mat);//antes nao era necessario?
+                                csimpm.Save(mm);
+//                                }
+                                ((ListModelList) lbEstudantes.getModel()).remove(mat);
+                                Clients.showNotification(" Matricula Rejeitada com Sucesso", null, null, null, 2000);
+                                //Substituido com eventquee
+//                                new Listbox().appendChild(((Listbox) winAddMotivo.getParent().getParent().getFellow("lbEstudantes"))
+//                                        .getItemAtIndex(litem.getValue()));
+
+                                Messagebox.show("Enviar email ao estudante?", "", Messagebox.YES | Messagebox.NO, Messagebox.QUESTION,
+                                        new EventListener() {
+                                            @Override
+                                            public void onEvent(Event evet) throws InterruptedException, IOException, EmailException, DocumentException {
+                                                switch (((Integer) evet.getData()).intValue()) {
+                                                    case Messagebox.YES:
+                                                        par.clear();
+                                par.put("ide", mpk);
+                               final Matricula mat1 = (Matricula) csimpm.findEntByJPQuery("from Matricula m where m.matriculaPK=:ide", par);
+                                                        Users uu = csimpm.get(Users.class, u.getUtilizador());
+                                                        Funcionario f = csimpm.get(Funcionario.class, uu.getIdFuncionario().getIdFuncionario());
+                                                        Clients.evalJavaScript("var xhttp = new XMLHttpRequest();\n"
+                                                                + "xhttp = new XMLHttpRequest();"
+                                                                + "xhttp.open('POST', 'EnviarEmailRecibo?tipo=2&id1=" + mat1.getEstudante().getIdEstudante().intValue()
+                                                                + "&id2=" + mat1.getMatriculaPK().getAno() + "&idf=" + f.getIdFuncionario().intValue() + "&ido=" + 0 + "', true);\n"
+                                                                + " xhttp.send();");
+                                                        break;
+                                                    case Messagebox.NO:
+                                                }
+                                            }
+                                        });
+                                winMot.detach();
                                 break;
                             case Messagebox.NO:
                                 return;
@@ -718,7 +822,14 @@ public class ListaEstudantesMatriculadosController extends GenericForwardCompose
         dano = todo.getDataMatricula();
         // }
 
-        PlanificacaoAnoLectivo planificacaoAnoLectivo = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo", null);
+        Users up = csimpm.get(Users.class, usr.getUtilizador());
+        par.clear();
+        par.put("fac", todo.getCurso().getFaculdade());
+        PlanificacaoAnoLectivo planificacaoAnoLectivo = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo p where p.faculdade = :fac", par);
+        if (planificacaoAnoLectivo == null) {
+            Clients.showNotification("Não foi encontrado um plano de matriculas para " + todo.getCurso().getFaculdade(), "error", null, null, 3000);
+            return;
+        }
         if (planificacaoAnoLectivo != null) {
 //            if (dano.before(planificacaoAnoLectivo.getDataInicioMatricula())) {
 //                Clients.showNotification("Fora da Epoca de Matricula", "warning", null, null, 0);
@@ -833,19 +944,20 @@ public class ListaEstudantesMatriculadosController extends GenericForwardCompose
         Estudante estudante = mat.getEstudante();
         String obs = mat.getObs();
         estudante = csimpm.load(Estudante.class, estudante.getIdEstudante());
-        par.clear();
-        par.put("ide", estudante);
-        Prescricao pre = csimpm.findEntByJPQuery("from Prescricao p where p.inscricaodisciplina.inscricao.idEstudante = :ide"
-                + " and p.estado is true", par);
-        if (pre != null) {
-            Clients.showNotification("O estudante prescreveu uma disciplina! So poderá Matricular depois de regularizar", "error", null, null, 0);
-            win.detach();
-        }
+        // par.clear();
+        // par.put("ide", estudante);
+        // Prescricao pre = csimpm.findEntByJPQuery("from Prescricao p where p.inscricaodisciplina.inscricao.idEstudante = :ide"
+        //         + " and p.estado is true", par);
+        //  if (pre != null) {
+        //      Clients.showNotification("O estudante prescreveu uma disciplina! So poderá Matricular depois de regularizar", "error", null, null, 0);
+        //      win.detach();
+        //  }
         Bolsa bols = estudante.getBolsa();
         Long cursocurrente = estudante.getCursocurrente().getIdCurso();
         Long cursoingresso = estudante.getCursoingresso().getIdCurso();
         Estadocivil estadoc = estudante.getEstadoCivil();
         Pais escolap = estudante.getEscolaPais();
+        Provincia escolaprov = estudante.getEscolaprovincia();
         int nacionalidade = estudante.getNacionalidade().getIdPais();
         Viaingresso ving = estudante.getViaIngresso();
         Provincia provnat = estudante.getProvincia();
@@ -865,7 +977,7 @@ public class ListaEstudantesMatriculadosController extends GenericForwardCompose
         Comboitem citcursocurrente;
         while (itemscursocurrente.hasNext()) {
             citcursocurrente = itemscursocurrente.next();
-            if (((Curso) citcursocurrente.getValue()).getIdCurso() == cursocurrente) {
+            if (Objects.equals(((Curso) citcursocurrente.getValue()).getIdCurso(), cursocurrente)) {
                 ((Combobox) win.getFellow("cbcursocurrente")).setSelectedItem(citcursocurrente);
                 break;
             }
@@ -972,6 +1084,18 @@ public class ListaEstudantesMatriculadosController extends GenericForwardCompose
                 citescolaPais = itemsescolaPais.next();
                 if (((Pais) citescolaPais.getValue()).getIdPais() == escolaPais) {
                     ((Combobox) win.getFellow("cbescolaPais")).setSelectedItem(citescolaPais);
+                    break;
+                }
+            }
+        }
+        if (escolaprov != null) {
+            Long escolaprovincia = escolaprov.getIdProvincia();
+            final Iterator<Comboitem> itemsescolaProv = new ArrayList(((Combobox) win.getFellow("cbescolaProvincia")).getItems()).listIterator();
+            Comboitem citescolaProv;
+            while (itemsescolaProv.hasNext()) {
+                citescolaProv = itemsescolaProv.next();
+                if (Objects.equals(((Provincia) citescolaProv.getValue()).getIdProvincia(), escolaprovincia)) {
+                    ((Combobox) win.getFellow("cbescolaProvincia")).setSelectedItem(citescolaProv);
                     break;
                 }
             }
@@ -1342,50 +1466,54 @@ public class ListaEstudantesMatriculadosController extends GenericForwardCompose
                             switch (((Integer) evet.getData()).intValue()) {
                                 case Messagebox.YES:
                                     Estudante e = csimpm.get(Estudante.class, idest.getValue().longValue());
-                                    Endereco end = e.getEndereco();
-                                    Enderecof endf = e.getEnderecof();
-                                    Profissao pro = e.getProfissao();
-                                    Documento doc = e.getDocumento();
-                                    Ingressobolseiro ib = e.getIngressobolseiro();
-                                    Ingressotransferencia it = e.getIngressotransferencia();
-                                    Especial esp = e.getEspecial();
-                                    Ingressomudancauniversidade im = e.getIngressomudancauniversidade();
-                                    Ingressoexameadmissao ee = e.getIngressoexameadmissao();
-                                    Long olde = e.getIdEstudante();
-                                    e.setIdEstudante(null);
-
-                                    Curso cu = (Curso) cbcurso2.getSelectedItem().getValue();
-                                    e.setPlanoc(cu.getPlanoc());
-                                    e.setCursocurrente(cu);
-                                    String te = cu.getFaculdade().getTenant();
-                                    csimpm.SaveSes(e, te);//criar endereco, enderecof,profissao,documento,ingressobolseiro,ingressotransferencia,especial,ingressomudancauniversidade
-                                    end.setIdEstudante(e.getIdEstudante());
-                                    end.setEstudante(e);
-                                    csimpm.SaveSes(end, te);
-                                    endf.setIdEstudante(e.getIdEstudante());
-                                    endf.setEstudante(e);
-                                    csimpm.SaveSes(endf, te);
-                                    pro.setIdEstudante(e.getIdEstudante());
-                                    pro.setEstudante(e);
-                                    csimpm.SaveSes(pro, te);
-                                    doc.setIdEstudante(e.getIdEstudante());
-                                    doc.setEstudante(e);
-                                    csimpm.SaveSes(doc, te);
-                                    ib.setIdEstudante(e.getIdEstudante());
-                                    ib.setEstudante(e);
-                                    csimpm.SaveSes(ib, te);
-                                    it.setIdEstudante(e.getIdEstudante());
-                                    it.setEstudante(e);
-                                    csimpm.SaveSes(it, te);
-                                    esp.setIdEstudante(e.getIdEstudante());
-                                    esp.setEstudante(e);
-                                    csimpm.SaveSes(esp, te);
-                                    im.setIdEstudante(e.getIdEstudante());
-                                    im.setEstudante(e);
-                                    csimpm.SaveSes(im, te);
-                                    ee.setIdEstudante(e.getIdEstudante());
-                                    ee.setEstudante(e);
-                                    csimpm.SaveSes(ee, te);
+//                                    Estudante e = new Estudante();
+//                                    e.setNomeCompleto(est.getNomeCompleto());
+//                                    e.setApelido(est.getApelido());
+//                                    e.
+//                                    Endereco end = e.getEndereco();
+//                                    Enderecof endf = e.getEnderecof();
+//                                    Profissao pro = e.getProfissao();
+//                                    Documento doc = e.getDocumento();
+//                                    Ingressobolseiro ib = e.getIngressobolseiro();
+//                                    Ingressotransferencia it = e.getIngressotransferencia();
+//                                    Especial esp = e.getEspecial();
+//                                    Ingressomudancauniversidade im = e.getIngressomudancauniversidade();
+//                                    Ingressoexameadmissao ee = e.getIngressoexameadmissao();
+//                                    Long olde = e.getIdEstudante();
+//                                    e.setIdEstudante(null);
+//
+//                                    Curso cu = (Curso) cbcurso2.getSelectedItem().getValue();
+//                                    e.setPlanoc(cu.getPlanoc());
+//                                    e.setCursocurrente(cu);
+//                                    String te = cu.getFaculdade().getTenant();
+//                                    csimpm.Save(e);//criar endereco, enderecof,profissao,documento,ingressobolseiro,ingressotransferencia,especial,ingressomudancauniversidade
+//                                    end.setIdEstudante(e.getIdEstudante());
+//                                    end.setEstudante(e);
+//                                    csimpm.Save(end);
+//                                    endf.setIdEstudante(e.getIdEstudante());
+//                                    endf.setEstudante(e);
+//                                    csimpm.Save(endf);
+//                                    pro.setIdEstudante(e.getIdEstudante());
+//                                    pro.setEstudante(e);
+//                                    csimpm.Save(pro);
+//                                    doc.setIdEstudante(e.getIdEstudante());
+//                                    doc.setEstudante(e);
+//                                    csimpm.Save(doc);
+//                                    ib.setIdEstudante(e.getIdEstudante());
+//                                    ib.setEstudante(e);
+//                                    csimpm.Save(ib);
+//                                    it.setIdEstudante(e.getIdEstudante());
+//                                    it.setEstudante(e);
+//                                    csimpm.Save(it);
+//                                    esp.setIdEstudante(e.getIdEstudante());
+//                                    esp.setEstudante(e);
+//                                    csimpm.Save(esp);
+//                                    im.setIdEstudante(e.getIdEstudante());
+//                                    im.setEstudante(e);
+//                                    csimpm.Save(im);
+//                                    ee.setIdEstudante(e.getIdEstudante());
+//                                    ee.setEstudante(e);
+//                                    csimpm.Save(ee);
 
                                     e = csimpm.get(Estudante.class, idest.getValue().longValue());
                                     e.setNomeCompleto(e.getNomeCompleto() + " (Mudou Curso)");

@@ -17,6 +17,7 @@ import esira.domain.Funcionario;
 import esira.domain.Lecciona;
 import esira.domain.LeccionaPK;
 import esira.domain.Matricula;
+import esira.domain.Periodo;
 import esira.domain.Planocurricular;
 import esira.domain.PlanocurricularPK;
 import esira.domain.Precedencia;
@@ -88,7 +89,7 @@ public class PlanoCurricularController extends GenericForwardComposer {
     private Textbox txtDescricao, txtLocalizacao, txtAbreviatura, txtAcient, txtCurso, txtAbrevCurso, txtCodCurso,
             txtAbrevDisc, txtNomeDisc, txtDpto, txtareaObjGeral, txtCod, txtnatraso, txtCodigo;
     //private Textarea txtareaObjGeral;
-    private Combobox cbdirector, cbdelegacao, cbfaculdade, cbPeriodDisc, cbcaracter, cbareacient, cbPlanoP, cbCursoPrec, cbdiscipPre, cbSemPrec, cbprec;
+    private Combobox cbturno, cbplano, cbdirector, cbdelegacao, cbfaculdade, cbPeriodDisc, cbcaracter, cbareacient, cbPlanoP, cbCursoPrec, cbdiscipPre, cbSemPrec, cbprec;
     private Intbox fid, aid, cid, intSemestre, intDiscNivel, intcredito, did, txtPlano, txtPlanoD, ibPlanoP;
     private Listbox lbFaculdade, lbACient, lbCurso, lbDiscip, lbCursoPrec, lbprec;
     private Label validationFac, validationAcient, validationCurso, validationDisc;
@@ -127,7 +128,7 @@ public class PlanoCurricularController extends GenericForwardComposer {
         super.doAfterCompose(comp);
         if (lbDiscip != null) {
             addeventoOrd(lbDiscip, null, null);
-            if (usr.getFaculdade().getLocalizacao()== null) {
+            if (usr.getFaculdade().getLocalizacao() == null) {
                 cbfaculdade.setVisible(true);
                 cbfaculdade.setModel(getFaculdadeModel());
             }
@@ -136,11 +137,13 @@ public class PlanoCurricularController extends GenericForwardComposer {
             ListModel lm = cbcurso.getModel();
             if (lm != null && lm.getSize() > 0) {
                 condpar.put("curso", (Curso) lm.getElementAt(0));
+                List<Planocurricular> lp = csimp.findByJPQuery("from Planocurricular p where p.curso = :curso", condpar);
+                ((Combobox)mDialogAddDiscip.getFellow("cbplano")).setModel(new ListModelList<Planocurricular>(lp));
                 setLB(0, 20);
             }
         }
         if (lbCurso != null) {
-            if (usr.getFaculdade().getLocalizacao()== null) {
+            if (usr.getFaculdade().getLocalizacao() == null) {
                 cbfaculdade.setVisible(true);
                 cbfaculdade.setModel(getFaculdadeModel());
             }
@@ -402,6 +405,10 @@ public class PlanoCurricularController extends GenericForwardComposer {
 
     }
 
+    public ListModel<Periodo> getturnoModel() {
+        return new ListModelList<Periodo>(csimp.getAll(Periodo.class));
+    }
+
     public ListModel<Curso> getCursoModel() {
         // return cursoModel;
 //        Map<String, Object> par = new HashMap<>();
@@ -415,6 +422,7 @@ public class PlanoCurricularController extends GenericForwardComposer {
         mDialogAddCurso.setParent(windowCurso);
         mDialogAddCurso.setTitle("Adicionar Curso");
         ((Combobox) mDialogAddCurso.getFellow("cbfaculdade")).setValue("----Faculdade----");
+        ((Combobox) mDialogAddCurso.getFellow("cbturno")).setValue("------------ Periodo -----------");
         mDialogAddCurso.doModal();
     }
 
@@ -432,6 +440,7 @@ public class PlanoCurricularController extends GenericForwardComposer {
             c.setQtdSemestres(intSemestre.getValue());
             c.setDescricao(txtCurso.getValue());
             c.setPlanoc(txtPlano.getValue());
+            c.setTurno(((Periodo) cbturno.getSelectedItem().getValue()));
             if (cbfaculdade.getSelectedItem() == null) {
                 cbfaculdade.setText("");
                 cbfaculdade.getText();
@@ -439,15 +448,15 @@ public class PlanoCurricularController extends GenericForwardComposer {
             c.setFaculdade(((Faculdade) cbfaculdade.getSelectedItem().getValue()));
             if (!csimp.exist(c)) {
                 csimp.Save(c);
-                par.clear();
-                par.put("c", c);
-                par.put("a", c.getPlanoc());
-                Planocurricular pc = csimp.findEntByJPQuery("from Planocurricular p where p.curso = :c and p.planocurricularPK.ano=:a", par);
-                if (pc == null) {
-                    pc = new Planocurricular(new PlanocurricularPK(c.getPlanoc(), c.getIdCurso()));
-                    pc.setCurso(c);
-                    csimp.Save(pc);
-                }
+//                par.clear();
+//                par.put("c", c);
+//                par.put("a", c.getPlanoc());
+//                Planocurricular pc = csimp.findEntByJPQuery("from Planocurricular p where p.curso = :c and p.planocurricularPK.ano=:a", par);
+//                if (pc == null) {
+//                    pc = new Planocurricular(new PlanocurricularPK(c.getPlanoc(), c.getIdCurso()));
+//                    pc.setCurso(c);
+//                    csimp.Save(pc);
+//                }
                 Clients.showNotification(" adicionado com sucesso", null, null, null, 2000);
             } else {
                 validationCurso.setValue(c.getDescricao() + " ja se encontra cadastrado no sistema");
@@ -466,28 +475,33 @@ public class PlanoCurricularController extends GenericForwardComposer {
                 cbfaculdade.getText();
             }
             c.setFaculdade(((Faculdade) cbfaculdade.getSelectedItem().getValue()));
+            if (cbturno.getSelectedItem() == null) {
+                cbturno.setText("");
+                cbturno.getText();
+            }
+            c.setTurno(((Periodo) cbturno.getSelectedItem().getValue()));
             csimp.update(c);
-            par.clear();
-            par.put("c", c);
-            par.put("a", c.getPlanoc());
-            Planocurricular pc = csimp.findEntByJPQuery("from Planocurricular p where p.curso = :c and p.planocurricularPK.ano=:a", par);
-            if (pc == null) {
-                pc = new Planocurricular(new PlanocurricularPK(oldplano, c.getIdCurso()));
-                pc.setCurso(c);
-                csimp.Save(pc);
-            }
-            if (c.getPlanoc() != oldplano) {
-                par.clear();
-                par.put("c", c);
-                par.put("a", oldplano);
-                Disciplina d = csimp.findEntByJPQuery("from Disciplina d where d.curso = :c and d.planoc = :a", par);
-                if (d == null) {
-                    pc = csimp.get(Planocurricular.class, new PlanocurricularPK(c.getPlanoc(), c.getIdCurso()));
-                    if (pc != null) {
-                        csimp.delete(pc);
-                    }
-                }
-            }
+//            par.clear();
+//            par.put("c", c);
+//            par.put("a", c.getPlanoc());
+//            Planocurricular pc = csimp.findEntByJPQuery("from Planocurricular p where p.curso = :c and p.planocurricularPK.ano=:a", par);
+//            if (pc == null) {
+//                pc = new Planocurricular(new PlanocurricularPK(oldplano, c.getIdCurso()));
+//                pc.setCurso(c);
+//                csimp.Save(pc);
+//            }
+//            if (c.getPlanoc() != oldplano) {
+//                par.clear();
+//                par.put("c", c);
+//                par.put("a", oldplano);
+//                Disciplina d = csimp.findEntByJPQuery("from Disciplina d where d.curso = :c and d.planoc = :a", par);
+//                if (d == null) {
+//                    pc = csimp.get(Planocurricular.class, new PlanocurricularPK(c.getPlanoc(), c.getIdCurso()));
+//                    if (pc != null) {
+//                        csimp.delete(pc);
+//                    }
+//                }
+//            }
             Clients.showNotification(c.getDescricao() + " modificado com sucesso", null, null, null, 2000);
         }
 //        cursos = csimp.getAll(Curso.class);
@@ -504,6 +518,7 @@ public class PlanoCurricularController extends GenericForwardComposer {
         Button btn = (Button) evt.getOrigin().getTarget();
         Listitem litem = (Listitem) btn.getParent().getParent();
         Curso c = (Curso) litem.getValue();
+        int turno = c.getTurno().getIdPeriodo();
         int f = c.getFaculdade().getIdFaculdade();
         String s = c.getFaculdade().getDesricao();
         mDialogAddCurso.setParent(windowCurso);
@@ -531,6 +546,16 @@ public class PlanoCurricularController extends GenericForwardComposer {
                 break;
             }
         }
+
+        final Iterator<Comboitem> itemsturno = new ArrayList(((Combobox) mDialogAddCurso.getFellow("cbturno")).getItems()).listIterator();
+        Comboitem citturno;
+        while (itemsturno.hasNext()) {
+            citturno = itemsturno.next();
+            if (((Periodo) citturno.getValue()).getIdPeriodo() == turno) {
+                ((Combobox) mDialogAddCurso.getFellow("cbturno")).setSelectedItem(citturno);
+                break;
+            }
+        }
     }
 
     public void onDeleteCurso(ForwardEvent evt) throws Exception {
@@ -551,6 +576,7 @@ public class PlanoCurricularController extends GenericForwardComposer {
         txtCurso.setConstraint(c);
         txtAbrevCurso.setConstraint(c);
         cbfaculdade.setConstraint(c);
+        cbturno.setConstraint(c);
         intSemestre.setConstraint(c);
         txtCodCurso.setConstraint(c);
         txtPlano.setConstraint(c);
@@ -565,6 +591,7 @@ public class PlanoCurricularController extends GenericForwardComposer {
         txtCurso.setConstraint(" no Empty: Insira o nome do Curso!");
         txtAbrevCurso.setConstraint(" no Empty: Insira abreviatura do Curso!");
         cbfaculdade.setConstraint(" no Empty: Seleccione uma Faculdade!");
+        cbturno.setConstraint(" no Empty: Seleccione uma Periodo!");
         intSemestre.setConstraint(" no Empty: Insira o total de semestres!");
         txtCodCurso.setConstraint(" no Empty: Insira o codigo do Curso!");
         txtPlano.setConstraint(" no Empty: Insira o ultimo Plano curricular (Ano)!");
@@ -592,6 +619,39 @@ public class PlanoCurricularController extends GenericForwardComposer {
 
     }
 
+    public ListModel<Curso> getCursoDiscModel() {
+        if (usr.getFaculdade().getLocalizacao() != null) {
+            Faculdade f = csimp.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
+            par.clear();
+            par.put("fac", f);
+            List<Curso> lp = csimp.findByJPQuery("from Curso c where c.faculdade = :fac", par);
+            return new ListModelList<Curso>(lp);
+        } else {
+            List<Curso> lp = csimp.getAll(Curso.class);
+            return new ListModelList<Curso>(lp);
+        }
+    }
+
+    public void onSetPlano() {
+        if (cbplano.getModel() == null) {
+            par.clear();
+            if (cbcurso.getSelectedItem() == null) {
+                cbcurso.setText("");
+                cbcurso.getValue();
+            }
+            par.put("c", ((Curso) cbcurso.getSelectedItem().getValue()));
+            List<Planocurricular> lp = csimp.findByJPQuery("from Planocurricular p where p.curso = :c", par);
+            cbplano.setModel(new ListModelList<Planocurricular>(lp));
+        }
+    }
+
+    public void onSelcurso() {
+        par.clear();
+        par.put("c", ((Curso) cbcurso.getSelectedItem().getValue()));
+        List<Planocurricular> lp = csimp.findByJPQuery("from Planocurricular p where p.curso = :c", par);
+        ((Combobox)mDialogAddDiscip.getFellow("cbplano")).setModel(new ListModelList<Planocurricular>(lp));
+    }
+
     public ListModel<Disciplina> getDiscipModel() {
         //return disciplinaModel;
 //        Map<String, Object> par = new HashMap<>();
@@ -611,11 +671,12 @@ public class PlanoCurricularController extends GenericForwardComposer {
 
     public void onAddDiscip() {
         mDialogAddDiscip.setParent(windowDiscip);
-        mDialogAddDiscip.setTitle("Adicionar Faculdade");
+        mDialogAddDiscip.setTitle("Adicionar Disciplina");
         ((Combobox) mDialogAddDiscip.getFellow("cbPeriodDisc")).setValue("------Periodo------");
         ((Combobox) mDialogAddDiscip.getFellow("cbcaracter")).setValue("------Caracter------");
         ((Combobox) mDialogAddDiscip.getFellow("cbcurso")).setValue("------Curso------");
-        ((Combobox) mDialogAddDiscip.getFellow("cbareacient")).setValue("------Area  Cientifica------");
+        //   ((Combobox) mDialogAddDiscip.getFellow("cbareacient")).setValue("------Area  Cientifica------");
+        ((Combobox) mDialogAddDiscip.getFellow("cbplano")).setValue("------Plano Curricular------");
         mDialogAddDiscip.doModal();
     }
 
@@ -633,42 +694,46 @@ public class PlanoCurricularController extends GenericForwardComposer {
             d.setNome(txtNomeDisc.getValue());
             d.setNivel(intDiscNivel.getValue());
             d.setNatraso(txtnatraso.getValue());
-            d.setPlanoc(txtPlanoD.getValue());
             if (cbPeriodDisc.getSelectedItem() == null) {
                 cbPeriodDisc.setText("");
                 cbPeriodDisc.getText();
             }
             d.setSemestre(Integer.parseInt(cbPeriodDisc.getSelectedItem().getValue().toString()));
             d.setCredito(intcredito.getValue());
+            if (cbplano.getSelectedItem() == null) {
+                cbplano.setText("");
+                cbplano.getText();
+            }
+            d.setPlanoc(((Planocurricular) cbplano.getSelectedItem().getValue()).getPlanocurricularPK().getAno());
             if (cbcurso.getSelectedItem() == null) {
                 cbcurso.setText("");
                 cbcurso.getText();
             }
             d.setCurso((Curso) cbcurso.getSelectedItem().getValue());
-            d.setDepartamento(txtDpto.getValue());
+            d.setDepartamento(null);//txtDpto.getValue());
             if (cbcaracter.getSelectedItem() == null) {
                 cbcaracter.setText("");
                 cbcaracter.getText();
             }
             d.setCaracter((Caracter) cbcaracter.getSelectedItem().getValue());
-            d.setObjcetivoGeral(txtareaObjGeral.getValue());
-            if (cbareacient.getSelectedItem() == null) {
-                cbareacient.setText("");
-                cbareacient.getText();
-            }
-            d.setAreaCientifica((Areacientifica) cbareacient.getSelectedItem().getValue());
+            d.setObjcetivoGeral(null);//txtareaObjGeral.getValue());
+//            if (cbareacient.getSelectedItem() == null) {
+//                cbareacient.setText("");
+//                cbareacient.getText();
+//            }
+            d.setAreaCientifica(null);//(Areacientifica) cbareacient.getSelectedItem().getValue());
             if (!csimp.exist(d)) {
                 csimp.Save(d);
                 par.clear();
-                par.put("c", d.getCurso());
-                int plano = d.getPlanoc();
-                par.put("a", plano);
-                Planocurricular pc = csimp.findEntByJPQuery("from Planocurricular p where p.curso = :c and p.planocurricularPK.ano=:a", par);
-                if (pc == null) {
-                    pc = new Planocurricular(new PlanocurricularPK(plano, d.getCurso().getIdCurso()));
-                    pc.setCurso(d.getCurso());
-                    csimp.Save(pc);
-                }
+//                par.put("c", d.getCurso());
+//                int plano = d.getPlanoc();
+//                par.put("a", plano);
+//                Planocurricular pc = csimp.findEntByJPQuery("from Planocurricular p where p.curso = :c and p.planocurricularPK.ano=:a", par);
+//                if (pc == null) {
+//                    pc = new Planocurricular(new PlanocurricularPK(plano, d.getCurso().getIdCurso()));
+//                    pc.setCurso(d.getCurso());
+//                    csimp.Save(pc);
+//                }
                 Clients.showNotification(" adicionado com sucesso", null, null, null, 2000);
             } else {
                 validationDisc.setValue(d.getNome() + " ja se encontra cadastrado no sistema");
@@ -690,55 +755,57 @@ public class PlanoCurricularController extends GenericForwardComposer {
             d.setNome(txtNomeDisc.getValue());
             d.setNivel(intDiscNivel.getValue());
             d.setNatraso(txtnatraso.getValue());
-            d.setPlanoc(txtPlanoD.getValue());
             if (cbPeriodDisc.getSelectedItem() == null) {
                 cbPeriodDisc.setText("");
                 cbPeriodDisc.getText();
             }
             d.setSemestre(Integer.parseInt(cbPeriodDisc.getSelectedItem().getValue().toString()));
             d.setCredito(intcredito.getValue());
+            if (cbplano.getSelectedItem() == null) {
+                cbplano.setText("");
+                cbplano.getText();
+            }
+            d.setPlanoc(((Planocurricular) cbplano.getSelectedItem().getValue()).getPlanocurricularPK().getAno());
             if (cbcurso.getSelectedItem() == null) {
                 cbcurso.setText("");
                 cbcurso.getText();
             }
             d.setCurso((Curso) cbcurso.getSelectedItem().getValue());
-            d.setDepartamento(txtDpto.getValue());
+            //d.setDepartamento(txtDpto.getValue());
             if (cbcaracter.getSelectedItem() == null) {
                 cbcaracter.setText("");
                 cbcaracter.getText();
             }
             d.setCaracter((Caracter) cbcaracter.getSelectedItem().getValue());
-            d.setObjcetivoGeral(txtareaObjGeral.getValue());
-            if (cbareacient.getSelectedItem() == null) {
-                cbareacient.setText("");
-                cbareacient.getText();
-            }
-            d.setAreaCientifica((Areacientifica) cbareacient.getSelectedItem().getValue());
+            // d.setObjcetivoGeral(txtareaObjGeral.getValue());
+//            if (cbareacient.getSelectedItem() == null) {
+//                cbareacient.setText("");
+//                cbareacient.getText();
+//            }
+            //d.setAreaCientifica((Areacientifica) cbareacient.getSelectedItem().getValue());
             csimp.update(d);
-            if (d.getPlanoc() != oldplano) {
-                par.clear();
-                par.put("c", d.getCurso());
-                par.put("a", oldplano);
-//                Long l = csimp.countJPQuery("select count(d.idDisc) from Disciplina d where d.curso = :c and d.planoc = :a", par);
-//                if (l.intValue()==0) {
-                Disciplina di = csimp.findEntByJPQuery("from Disciplina d where d.curso = :c and d.planoc = :a", par);
-                if (di == null) {
-                    Planocurricular pc = csimp.get(Planocurricular.class, new PlanocurricularPK(oldplano, d.getCurso().getIdCurso()));
-                    if (pc != null) {
-                        csimp.delete(pc);
-                    }
-                }
-                par.clear();
-                par.put("c", d.getCurso());
-                int plano = d.getPlanoc();
-                par.put("a", plano);
-                Planocurricular pc = csimp.findEntByJPQuery("from Planocurricular p where p.curso = :c and p.planocurricularPK.ano=:a", par);
-                if (pc == null) {
-                    pc = new Planocurricular(new PlanocurricularPK(plano, d.getCurso().getIdCurso()));
-                    pc.setCurso(d.getCurso());
-                    csimp.Save(pc);
-                }
-            }
+//            if (d.getPlanoc() != oldplano) {
+//                par.clear();
+//                par.put("c", d.getCurso());
+//                par.put("a", oldplano);
+//                Disciplina di = csimp.findEntByJPQuery("from Disciplina d where d.curso = :c and d.planoc = :a", par);
+//                if (di == null) {
+//                    Planocurricular pc = csimp.get(Planocurricular.class, new PlanocurricularPK(oldplano, d.getCurso().getIdCurso()));
+//                    if (pc != null) {
+//                        csimp.delete(pc);
+//                    }
+//                }
+//                par.clear();
+//                par.put("c", d.getCurso());
+//                int plano = d.getPlanoc();
+//                par.put("a", plano);
+//                Planocurricular pc = csimp.findEntByJPQuery("from Planocurricular p where p.curso = :c and p.planocurricularPK.ano=:a", par);
+//                if (pc == null) {
+//                    pc = new Planocurricular(new PlanocurricularPK(plano, d.getCurso().getIdCurso()));
+//                    pc.setCurso(d.getCurso());
+//                    csimp.Save(pc);
+//                }
+//            }
             int index = ((ListModelList) lbDiscip.getModel()).indexOf(d);
             if (index >= 0) {
                 ((ListModelList) lbDiscip.getModel()).set(index, d);
@@ -761,9 +828,10 @@ public class PlanoCurricularController extends GenericForwardComposer {
         int c = d.getCaracter().getIdCaracter().intValue();
         int cu = d.getCurso().getIdCurso().intValue();
         int a = 0;
-        if (d.getAreaCientifica() != null) {
-            a = d.getAreaCientifica().getIdarea().intValue();
-        }
+//        if (d.getAreaCientifica() != null) {
+//            a = d.getAreaCientifica().getIdarea().intValue();
+//        }
+        a = d.getPlanoc();
 
         mDialogAddDiscip.setParent(windowDiscip);
         mDialogAddDiscip.setTitle("Editar Disciplina");
@@ -775,9 +843,9 @@ public class PlanoCurricularController extends GenericForwardComposer {
         ((Textbox) mDialogAddDiscip.getFellow("txtnatraso")).setText(d.getNatraso());
         ((Intbox) mDialogAddDiscip.getFellow("intDiscNivel")).setValue(d.getNivel());
         ((Intbox) mDialogAddDiscip.getFellow("intcredito")).setValue(d.getCredito());
-        ((Textbox) mDialogAddDiscip.getFellow("txtDpto")).setText(d.getDepartamento());
-        ((Intbox) mDialogAddDiscip.getFellow("txtPlanoD")).setValue(d.getPlanoc());
-        ((Textbox) mDialogAddDiscip.getFellow("txtareaObjGeral")).setText(d.getObjcetivoGeral());
+        //  ((Textbox) mDialogAddDiscip.getFellow("txtDpto")).setText(d.getDepartamento());
+        //  ((Intbox) mDialogAddDiscip.getFellow("txtPlanoD")).setValue(d.getPlanoc());
+        // ((Textbox) mDialogAddDiscip.getFellow("txtareaObjGeral")).setText(d.getObjcetivoGeral());
         final Iterator<Comboitem> items = new ArrayList(((Combobox) mDialogAddDiscip.getFellow("cbPeriodDisc")).getItems()).listIterator();
         Comboitem cit;
         while (items.hasNext()) {
@@ -787,7 +855,6 @@ public class PlanoCurricularController extends GenericForwardComposer {
                 break;
             }
         }
-//        for (Comboitem cit : cbcaracter.getItems()) {
         final Iterator<Comboitem> items1 = new ArrayList(((Combobox) mDialogAddDiscip.getFellow("cbcaracter")).getItems()).listIterator();
         Comboitem cit1;
         while (items1.hasNext()) {
@@ -797,7 +864,6 @@ public class PlanoCurricularController extends GenericForwardComposer {
                 break;
             }
         }
-//        for (Comboitem cit : cbcurso.getItems()) {
         final Iterator<Comboitem> items2 = new ArrayList(((Combobox) mDialogAddDiscip.getFellow("cbcurso")).getItems()).listIterator();
         Comboitem cit2;
         while (items2.hasNext()) {
@@ -806,15 +872,24 @@ public class PlanoCurricularController extends GenericForwardComposer {
                 ((Combobox) mDialogAddDiscip.getFellow("cbcurso")).setSelectedItem(cit2);
             }
         }
-//        for (Comboitem cit : cbareacient.getItems()) {
-        final Iterator<Comboitem> items3 = new ArrayList(((Combobox) mDialogAddDiscip.getFellow("cbareacient")).getItems()).listIterator();
+        final Iterator<Comboitem> items3 = new ArrayList(((Combobox) mDialogAddDiscip.getFellow("cbplano")).getItems()).listIterator();
         Comboitem cit3;
         while (items3.hasNext()) {
             cit3 = items3.next();
-            if (((Areacientifica) cit3.getValue()).getIdarea() == a) {
-                ((Combobox) mDialogAddDiscip.getFellow("cbareacient")).setSelectedItem(cit3);
+            // Messagebox.show((((Planocurricular) cit3.getValue()) + ""));
+            if ((((Planocurricular) cit3.getValue()).getPlanocurricularPK().getAno()) == a) {
+                ((Combobox) mDialogAddDiscip.getFellow("cbplano")).setSelectedItem(cit3);
             }
         }
+
+//        final Iterator<Comboitem> items3 = new ArrayList(((Combobox) mDialogAddDiscip.getFellow("cbareacient")).getItems()).listIterator();
+//        Comboitem cit3;
+//        while (items3.hasNext()) {
+//            cit3 = items3.next();
+//            if (((Areacientifica) cit3.getValue()).getIdarea() == a) {
+//                ((Combobox) mDialogAddDiscip.getFellow("cbareacient")).setSelectedItem(cit3);
+//            }
+//        }
     }
 
     public void onDeleteDiscip(final ForwardEvent evt) throws Exception {
@@ -827,23 +902,20 @@ public class PlanoCurricularController extends GenericForwardComposer {
                                 Button btn = (Button) evt.getOrigin().getTarget();
                                 Listitem litem = (Listitem) btn.getParent().getParent();
                                 Disciplina d = (Disciplina) litem.getValue();
-                                int oldplano = d.getPlanoc();
+                                //int oldplano = d.getPlanoc();
                                 Curso cu = d.getCurso();
                                 new Listbox().appendChild(litem);
                                 csimp.delete(d);
-//                                if (d.getPlanoc() != oldplano) {
-                                par.clear();
-                                par.put("c", cu);
-                                par.put("a", oldplano);
-                                Disciplina di = csimp.findEntByJPQuery("from Disciplina d where d.curso = :c and d.planoc = :a", par);
-                                if (di == null) {
-                                    Planocurricular pc = csimp.get(Planocurricular.class, new PlanocurricularPK(oldplano, cu.getIdCurso()));
-                                    if (pc != null) {
-                                        csimp.delete(pc);
-                                    }
-                                }
+//                                par.clear();
+//                                par.put("c", cu);
+//                                par.put("a", oldplano);
+//                                Disciplina di = csimp.findEntByJPQuery("from Disciplina d where d.curso = :c and d.planoc = :a", par);
+//                                if (di == null) {
+//                                    Planocurricular pc = csimp.get(Planocurricular.class, new PlanocurricularPK(oldplano, cu.getIdCurso()));
+//                                    if (pc != null) {
+//                                        csimp.delete(pc);
+//                                    }
 //                                }
-//                                lbDiscip.setModel(getDiscipModel());
                                 Clients.showNotification(" apagado com sucesso", null, null, null, 2000);
                                 break;
                             case Messagebox.NO:
@@ -861,10 +933,11 @@ public class PlanoCurricularController extends GenericForwardComposer {
         cbPeriodDisc.setConstraint(c);
         intcredito.setConstraint(c);
         cbcurso.setConstraint(c);
-        txtDpto.setConstraint(c);
-        txtPlanoD.setConstraint(c);
-        cbareacient.setConstraint(c);
-        txtareaObjGeral.setConstraint(c);
+        // txtDpto.setConstraint(c);
+        // txtPlanoD.setConstraint(c);
+        cbplano.setConstraint(c);
+        //  cbareacient.setConstraint(c);
+        // txtareaObjGeral.setConstraint(c);
         txtAbrevDisc.setValue(null);
         txtnatraso.setValue(null);
         txtNomeDisc.setValue(null);
@@ -872,9 +945,9 @@ public class PlanoCurricularController extends GenericForwardComposer {
         //cbPeriodDisc.setValue("----Periodo----");
         intcredito.setValue(null);
         //cbcurso.setValue("----Periodo----");
-        txtDpto.setValue(null);
+        // txtDpto.setValue(null);
         //cbareacient.setValue("---Area Cirntifica---");
-        txtareaObjGeral.setValue(null);
+        // txtareaObjGeral.setValue(null);
     }
 
     private void addDiscipConstraint() {
@@ -884,9 +957,10 @@ public class PlanoCurricularController extends GenericForwardComposer {
         cbPeriodDisc.setConstraint(" no Empty: Insira o periodo semestral!");
         intcredito.setConstraint(" no Empty: Insira o credito da disciplina!");
         cbcurso.setConstraint(" no Empty: Seleccione um curso!");
-        txtDpto.setConstraint(" no Empty: Insira um Departamento!");
-        txtPlanoD.setConstraint("no Empty: Insira o plano curricular (Ano)!");
-        cbareacient.setConstraint(" no Empty: Seleccione a Area Cientifica da disciplina!");
+        cbplano.setConstraint(" no Empty: Seleccione um plano!");
+        //txtDpto.setConstraint(" no Empty: Insira um Departamento!");
+        // txtPlanoD.setConstraint("no Empty: Insira o plano curricular (Ano)!");
+        //cbareacient.setConstraint(" no Empty: Seleccione a Area Cientifica da disciplina!");
     }
 
     public void onDetal(ForwardEvent evt) throws Exception {
@@ -1295,6 +1369,7 @@ public class PlanoCurricularController extends GenericForwardComposer {
             condpar.put("curso", (Curso) cbcurso.getSelectedItem().getValue());
         }
         setLB(0, 20);
+        onSelcurso();
     }
 
     public void setLB(int i, int j) {

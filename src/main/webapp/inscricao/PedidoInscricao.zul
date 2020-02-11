@@ -242,24 +242,33 @@
                                     <column hflex="1" vflex="1" />
                                 </columns> 
                                 <rows>
-                                     
+                                     <row>
+                                        <hlayout vflex="1" hflex="1" sclass="second-layout">
+                                            <div sclass="description-area" height="100%">
+                                                <label value="Histórico de prescrições:" />
+                                            </div>
+                                            <div sclass="description-area" height="100%">
+                                                <label id="lbprescricao" value="" width="98%" style="color:red;"/>.
+                                            </div>
+                                        </hlayout>
+                                    </row> 
                                     <row id="rwTaxanM" visible="false">
                                         <hlayout vflex="1" hflex="1" sclass="second-layout">
                                             <div sclass="description-area" height="100%">
-                                                <label value="Taxa Normal de Matricula:" /> 
+                                                <label value="Taxa Normal de Inscriçáo:" /> 
                                             </div>
                                             <div sclass="description-area" height="100%">
-                                                <label id="lbtaxaInscricao" value="" width="98%" style="color:red;"/>
+                                                <label id="lbtaxaInscricao" value="" width="98%" style="color:red;"/>.
                                             </div>
                                         </hlayout>
                                     </row>
                                     <row id="rwTaxaeM" visible="false">
                                         <hlayout vflex="1" hflex="1" sclass="second-layout">
                                             <div sclass="description-area" height="100%">
-                                                <label value="Taxa de Matricula para Estudante Estrangeiro:" />
+                                                <label value="Taxa de Inscriçáo para Estudante Estrangeiro:" />
                                             </div>
                                             <div sclass="description-area" height="100%">
-                                                <label id="lbtaxaInscricaoE" value="" width="98%" style="color:red;"/>
+                                                <label id="lbtaxaInscricaoE" value="" width="98%" style="color:red;"/>.
                                             </div>
                                         </hlayout>
                                     </row>
@@ -269,7 +278,7 @@
                                                 <label value="Taxa de Multa 1o Período:" />
                                             </div>
                                             <div sclass="description-area" height="100%">
-                                                <label id="lbtaxaMulta15dias" value="" width="98%" style="color:red;"/>
+                                                <label id="lbtaxaMulta15dias" value="" width="98%" style="color:red;"/>.
                                             </div>
                                         </hlayout>
                                     </row>
@@ -289,14 +298,14 @@
                                                 <label value="Total :" />
                                             </div>
                                             <div sclass="description-area" height="100%">
-                                                <label id="lbtotal" value="" width="98%"/>
+                                                <label id="lbtotal" value="" width="98%"/>.
                                             </div>
                                         </hlayout>
                                     </row>                                      
                                     <row>
                                         <hlayout vflex="1" hflex="1">
                                             <div sclass="description-area" height="100%">
-                                                <label style="align:center;color:blue" value="Comprovativo de Pagamento" />
+                                                <label style="align:center;color:blue" value="Comprovativo de Pagamento" />.
                                             </div>
                                         </hlayout>
                                     </row>       

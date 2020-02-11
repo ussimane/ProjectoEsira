@@ -269,13 +269,13 @@
                                         </div>
                                     </hlayout>
                                 </row>
-                                <row>
+                                <row visible="false">
                                     <hlayout vflex="1" hflex="1" sclass="second-layout">
                                         <div sclass="description-area" height="100%">
                                             <label  value="Idioma: *"/>
                                         </div>
                                         <div sclass="description-area" height="100%">
-                                            <textbox hflex="1" id="tbidioma" width="200px" constraint=" no Empty: Preenche o campo!"/>
+                                            <textbox hflex="1" id="tbidioma" width="200px"/>
                                         </div>
                                     </hlayout>
                                 </row>
@@ -353,10 +353,10 @@
                                 <row>
                                     <hlayout vflex="1" hflex="1" sclass="second-layout">
                                         <div sclass="description-area" height="100%">
-                                            <label  value="Avenida: *"/>
+                                            <label  value="Avenida:"/>
                                         </div>
                                         <div sclass="description-area" height="100%">
-                                            <textbox hflex="1" id="tbavenidaRua" width="200px" constraint=" no Empty: Preenche o campo!"/>
+                                            <textbox hflex="1" id="tbavenidaRua" width="200px"/>
                                         </div>
                                     </hlayout>
                                 </row>
@@ -462,13 +462,13 @@
                                         </div>
                                     </hlayout>
                                 </row>
-                                <row>
+                                <row visible="false">
                                     <hlayout vflex="1" hflex="1" sclass="second-layout">
                                         <div sclass="description-area" height="100%">
                                             <label  value="Nota Admissão: *"/>
                                         </div>
                                         <div sclass="description-area" height="100%">
-                                            <intbox hflex="1" id="ibnotaAdmissao" width="200px" constraint=" no Empty: Preenche o campo!"/>
+                                            <intbox hflex="1" id="ibnotaAdmissao" width="200px" />
                                         </div>
                                     </hlayout>
                                 </row>
@@ -489,6 +489,18 @@
                                         </div>
                                         <div sclass="description-area" height="100%">
                                             <combobox hflex="1" id="cbescolaPais"  onCreate="self.setSelectedIndex(121)" width="200px" model="${$composer.escolaPaisModel}" constraint=" no Empty: Seleccione um item!">
+                                                <comboitem label="${each.descricao}"/>
+                                            </combobox>
+                                        </div>
+                                    </hlayout>
+                                </row>
+                                <row>
+                                    <hlayout vflex="1" hflex="1" sclass="second-layout">
+                                        <div sclass="description-area" height="100%">
+                                            <label  value="Província onde Frequentou o Ensino Médio: *"/>
+                                        </div>
+                                        <div sclass="description-area" height="100%">
+                                            <combobox hflex="1" id="cbescolaProvincia"  width="200px" model="${$composer.provinciaModel}" constraint=" no Empty: Seleccione um item!">
                                                 <comboitem label="${each.descricao}"/>
                                             </combobox>
                                         </div>
@@ -873,7 +885,8 @@
                                             </button> 
                                         </div>
                                         <div sclass="description-area" height="100%">
-                                            <textbox style="border:none;background: transparent;position: absolute" width="0px" height="0px" id="tbimg2" constraint=" no Empty: Por favor anexar uma Copia do Bilhete!"/>
+                                            <textbox style="border:none;background: transparent;position: absolute" width="0px" height="0px" id="tbimg2"/>
+                                            <!--constraint=" no Empty: Por favor anexar uma Copia do Bilhete!"/>-->
                                             <listbox span="true" sizedByContent="true" style="overflow:auto" height="100%" id="lbimg2" >
                                                 <template name="model">
                                                     <listitem value="${each}">
@@ -952,7 +965,8 @@
                                             </button> 
                                         </div>
                                         <div sclass="description-area" height="100%">
-                                            <textbox style="border:none;background: transparent;position: absolute" width="0px" height="0px" id="tbimg3" constraint=" no Empty: Por favor anexar Certificado de Habilitações!"/>
+                                            <textbox style="border:none;background: transparent;position: absolute" width="0px" height="0px" id="tbimg3"/> 
+                                            <!--constraint=" no Empty: Por favor anexar Certificado de Habilitações!"/>-->
                                             <listbox span="true" sizedByContent="true" style="overflow:auto" height="100%" id="lbimg1" >
                                                 <template name="model">
                                                     <listitem value="${each}">
@@ -1128,7 +1142,8 @@
                                             </button> 
                                         </div>
                                         <div sclass="description-area" style="background-image:url('../images/profilev.png');border:1px solid #ddd;">
-                                            <textbox style="border:none;background: transparent;position: absolute" width="0px" height="0px" id="tbimg4" constraint=" no Empty: Por favor anexar Comprovativo de pagamento!"/>
+                                            <textbox style="border:none;background: transparent;position: absolute" width="0px" height="0px" id="tbimg4"/> 
+                                            <!--constraint=" no Empty: Por favor anexar Comprovativo de pagamento!"/>-->
                                             <listbox span="true"  sizedByContent="true" style="overflow:auto" height="100%" id="lbimg" >
                                                 <listhead  sizable="true">
                                                     <listheader label="Numero de recibo" align="left"/>

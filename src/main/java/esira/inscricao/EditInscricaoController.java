@@ -155,7 +155,7 @@ public class EditInscricaoController extends GenericForwardComposer {
         if (cbDiscRel != null && cbDiscRel.getItems() != null) {
             cbDiscRel.setSelectedIndex(-1);
         }
-       //Users u = csimpm.get(Users.class, usr.getUtilizador());
+        //Users u = csimpm.get(Users.class, usr.getUtilizador());
         Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         condpar.clear();
         condpar.put("fac", f);
@@ -166,7 +166,7 @@ public class EditInscricaoController extends GenericForwardComposer {
     }
 
     public void onSetQueue() {
-       // Users u = csimpm.get(Users.class, usr.getUtilizador());
+        // Users u = csimpm.get(Users.class, usr.getUtilizador());
         eq = EventQueues.lookup("pinscD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEvento());
         eq = EventQueues.lookup("rinscD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
@@ -247,7 +247,7 @@ public class EditInscricaoController extends GenericForwardComposer {
         int ano = cal.get(Calendar.YEAR);
         par.clear();
         par.put("user", usr.getUtilizador());
-       // Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
+        // Users u = csimpm.findEntByJPQuery("from Users u where u.utilizador = :user", par);
         Faculdade f = csimpm.get(Faculdade.class, usr.getFaculdade().getIdFaculdade());
         par.clear();
         par.put("ano", ano);
@@ -710,7 +710,7 @@ public class EditInscricaoController extends GenericForwardComposer {
         }
         Date dtaxa1, dtaxa2, dtaxa3;
         if (lbsem.getValue().equals("Semestre 1")) {
-            if (e.getMatriculaList().size() > 1) {
+            if (ano != e.getAnoIngresso()) {
                 dtaxa1 = pal.getDataFinalMatricula();
                 dtaxa2 = pal.getDataFimMatriculaE2();
                 dtaxa3 = pal.getDm1();
@@ -719,14 +719,16 @@ public class EditInscricaoController extends GenericForwardComposer {
                 dtaxa2 = pal.getDataFimIE2();
                 dtaxa3 = pal.getDma1();
             }
-            if (dano.after(dtaxa1) && dano.before(dtaxa2)) {
-                rwTaxamulta15.setVisible(true);
-                lbtaxaMulta15dias.setValue(pal.getPercentagemMultaInscricao15dias() + "");
-                total = total * (pal.getPercentagemMultaInscricao15dias() / 100);
-            } else if (dano.after(dtaxa2) && dano.before(dtaxa3)) {
-                rwTaxamulta30.setVisible(true);
-                lbtaxaMulta30dias.setValue(pal.getPercentagemMultaInscricao30dias() + "");
-                total = total * (pal.getPercentagemMultaInscricao30dias() / 100);
+            if (ano != e.getAnoIngresso()) {
+                if (dano.after(dtaxa1) && dano.before(dtaxa2)) {
+                    rwTaxamulta15.setVisible(true);
+                    lbtaxaMulta15dias.setValue(pal.getPercentagemMultaInscricao15dias() + "");
+                    total = total * (pal.getPercentagemMultaInscricao15dias() / 100);
+                } else if (dano.after(dtaxa2) && dano.before(dtaxa3)) {
+                    rwTaxamulta30.setVisible(true);
+                    lbtaxaMulta30dias.setValue(pal.getPercentagemMultaInscricao30dias() + "");
+                    total = total * (pal.getPercentagemMultaInscricao30dias() / 100);
+                }
             }
         } else {
             dtaxa1 = pal.getDataFimE1();
@@ -950,7 +952,7 @@ public class EditInscricaoController extends GenericForwardComposer {
                                     ii++;
                                 }
                                 Clients.showNotification(" Inscricao editada com Sucesso", null, null, null, 2000);
-                                   // t.commit();
+                                // t.commit();
                                 // while (!t.wasCommitted());
 //                                } catch (RuntimeException e) {
 //                                    //   t.rollback();

@@ -77,6 +77,14 @@
             <artifactId>jasperreports</artifactId>
             <version>4.7.0</version>
         </dependency>
+        
+                <!-- https://mvnrepository.com/artifact/net.sf.jasperreports/jasperreports-fonts -->
+<!-- https://mvnrepository.com/artifact/net.sf.jasperreports/jasperreports-fonts -->
+<dependency>
+    <groupId>net.sf.jasperreports</groupId>
+    <artifactId>jasperreports-fonts</artifactId>
+    <version>4.0.0</version>
+</dependency>
 
         <!-- Spring framework -->
         <dependency>

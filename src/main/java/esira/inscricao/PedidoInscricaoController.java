@@ -167,16 +167,16 @@ public class PedidoInscricaoController extends GenericForwardComposer {
         //}
         setLB(0, 20);
     }
-    
-    
+
     //provavelmente nao e usado
-    public void onSelCbcurso(){
-      if(cbcurso.getModel()!=null&&cbcurso.getModel().getSize()>0)cbcurso.setSelectedIndex(0);
+    public void onSelCbcurso() {
+        if (cbcurso.getModel() != null && cbcurso.getModel().getSize() > 0) {
+            cbcurso.setSelectedIndex(0);
+        }
     }
 
-
     public void onSetQueue() {
-       // Users u = csimpm.get(Users.class, usr.getUtilizador());
+        // Users u = csimpm.get(Users.class, usr.getUtilizador());
         eq = EventQueues.lookup("pinscD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
         eq.subscribe(getEvento());
         eq = EventQueues.lookup("rinscD" + usr.getFaculdade().getIdFaculdade(), EventQueues.APPLICATION, true);
@@ -330,6 +330,39 @@ public class PedidoInscricaoController extends GenericForwardComposer {
 //            discs.setMultiple(false);
             discs.appendChild(list);
 //            discs.setMultiple(true);
+        }
+        if (insc.getSemestre().equals(new Short("1"))) {
+            par.clear();
+            par.put("ano", ano - 1);
+            par.put("ide", insc.getIdEstudante());
+            List<Prescricao> p1 = csimpm.findByJPQuery("from Prescricao p where p.inscricaodisciplina.inscricao.idEstudante = :ide"
+                    + " and extract(year from p.inscricaodisciplina.inscricao.dataInscricao)=:ano", par);
+            String lab = "";
+            for (Prescricao pe : p1) {
+                lab = lab + (ano - 1) + "- " + pe.getInscricaodisciplina().getInscricao().getSemestre() + " Sem- " + pe.getInscricaodisciplina().getDisciplina().getNome() + ";\n";
+            }
+            ((Label) winAddInscricao.getFellow("lbprescricao")).setValue(lab);
+            //Messagebox.show(lab);
+        } else {
+            String lab = "";
+            par.clear();
+            par.put("ide", insc.getIdEstudante());
+            par.put("ano", ano);
+            List<Prescricao> p1 = csimpm.findByJPQuery("from Prescricao p where p.inscricaodisciplina.inscricao.idEstudante = :ide"
+                    + " and extract(year from p.inscricaodisciplina.inscricao.dataInscricao)=:ano", par);
+            for (Prescricao pe : p1) {
+                lab = lab + (ano - 1) + "- " + pe.getInscricaodisciplina().getInscricao().getSemestre() + " Sem- " + pe.getInscricaodisciplina().getDisciplina().getNome() + ";\n";
+            }
+            par.clear();
+            par.put("ano", ano - 1);
+            par.put("ide", insc.getIdEstudante());
+            List<Prescricao> p2 = csimpm.findByJPQuery("from Prescricao p where p.inscricaodisciplina.inscricao.idEstudante = :ide"
+                    + " and extract(year from p.inscricaodisciplina.inscricao.dataInscricao)=:ano"
+                    + " and p.inscricaodisciplina.inscricao.semestre=2", par);
+            for (Prescricao pe : p2) {
+                lab = lab + (ano - 1) + "- " + pe.getInscricaodisciplina().getInscricao().getSemestre() + " Sem- " + pe.getInscricaodisciplina().getDisciplina().getNome() + ";\n";
+            }
+            ((Label) winAddInscricao.getFellow("lbprescricao")).setValue(lab);
         }
         //Recibos
         ((Row) winAddInscricao.getFellow("rwRU")).setVisible(false);
@@ -713,34 +746,72 @@ public class PedidoInscricaoController extends GenericForwardComposer {
 //        ent.put("p", PlanificacaoAnoLectivo.class);
         Float total = null;
         PlanificacaoAnoLectivo pal = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo", null);
+        //mostrar a lista de prescricoes
+        if (lbsem.getValue().equals("Semestre 1")) {
+            par.clear();
+            par.put("ano", ano - 1);
+            par.put("ide", e);
+            List<Prescricao> p1 = csimpm.findByJPQuery("from Prescricao p where p.inscricaodisciplina.inscricao.idEstudante = :ide"
+                    + " and extract(year from p.inscricaodisciplina.inscricao.dataInscricao)=:ano", par);
+            String lab = "";
+            for (Prescricao pe : p1) {
+                lab = lab + (ano - 1) + "- " + pe.getInscricaodisciplina().getInscricao().getSemestre() + " Sem- " + pe.getInscricaodisciplina().getDisciplina().getNome() + ";\n";
+            }
+            ((Label) winAddInscricao.getFellow("lbprescricao")).setValue(lab);
+        } else {
+            String lab = "";
+            par.clear();
+            par.put("ide", e);
+            par.put("ano", ano);
+            List<Prescricao> p1 = csimpm.findByJPQuery("from Prescricao p where p.inscricaodisciplina.inscricao.idEstudante = :ide"
+                    + " and extract(year from p.inscricaodisciplina.inscricao.dataInscricao)=:ano", par);
+            for (Prescricao pe : p1) {
+                lab = lab + (ano - 1) + "- " + pe.getInscricaodisciplina().getInscricao().getSemestre() + " Sem- " + pe.getInscricaodisciplina().getDisciplina().getNome() + ";\n";
+            }
+            par.clear();
+            par.put("ano", ano - 1);
+            par.put("ide", e);
+            List<Prescricao> p2 = csimpm.findByJPQuery("from Prescricao p where p.inscricaodisciplina.inscricao.idEstudante = :ide"
+                    + " and extract(year from p.inscricaodisciplina.inscricao.dataInscricao)=:ano"
+                    + " and p.inscricaodisciplina.inscricao.semestre=2", par);
+            for (Prescricao pe : p2) {
+                lab = lab + (ano - 1) + "- " + pe.getInscricaodisciplina().getInscricao().getSemestre() + " Sem- " + pe.getInscricaodisciplina().getDisciplina().getNome() + ";\n";
+            }
+            ((Label) winAddInscricao.getFellow("lbprescricao")).setValue(lab);
+        }
         if (pais != 122) {
             rwTaxaeM.setVisible(true);
             lbtaxaInscricaoE.setValue(pal.getTaxaInscricaoEstrangeiro() + "");
-            total = pal.getTaxaInscricaoEstrangeiro().floatValue() * discSel.getItemCount();
+            total = pal.getTaxaInscricaoNacional().floatValue();//total = pal.getTaxaInscricaoEstrangeiro().floatValue() * discSel.getItemCount();
         } else {
             rwTaxanM.setVisible(true);
             lbtaxaInscricao.setValue(pal.getTaxaInscricaoNacional() + "");
-            total = pal.getTaxaInscricaoNacional().floatValue() * discSel.getItemCount();
+            total = pal.getTaxaInscricaoNacional().floatValue();// * discSel.getItemCount();
         }
         Date dtaxa1, dtaxa2, dtaxa3;
         if (lbsem.getValue().equals("Semestre 1")) {
-            if (e.getMatriculaList().size() > 1) {
+            if (ano != e.getAnoIngresso()) {
                 dtaxa1 = pal.getDataFinalMatricula();
                 dtaxa2 = pal.getDataFimMatriculaE2();
                 dtaxa3 = pal.getDm1();
             } else {
-                dtaxa1 = pal.getDataFimIE1();
-                dtaxa2 = pal.getDataFimIE2();
+//                dtaxa1 = pal.getDataFimIE1();
+//                dtaxa2 = pal.getDataFimIE2();
+//                dtaxa3 = pal.getDma1();
+                dtaxa1 = pal.getDatainicioInscricao();
+                dtaxa2 = pal.getDataFimIE1();
                 dtaxa3 = pal.getDma1();
             }
-            if (dano.after(dtaxa1) && dano.before(dtaxa2)) {
-                rwTaxamulta15.setVisible(true);
-                lbtaxaMulta15dias.setValue(pal.getPercentagemMultaInscricao15dias() + "");
-                total = total * (pal.getPercentagemMultaInscricao15dias() / 100);
-            } else if (dano.after(dtaxa2) && dano.before(dtaxa3)) {
-                rwTaxamulta30.setVisible(true);
-                lbtaxaMulta30dias.setValue(pal.getPercentagemMultaInscricao30dias() + "");
-                total = total * (pal.getPercentagemMultaInscricao30dias() / 100);
+            if (ano != e.getAnoIngresso()) {
+                if (dano.after(dtaxa1) && dano.before(dtaxa2)) {
+                    rwTaxamulta15.setVisible(true);
+                    lbtaxaMulta15dias.setValue(pal.getPercentagemMultaInscricao15dias() + "");
+                    total = total * (pal.getPercentagemMultaInscricao15dias() / 100);
+                } else if (dano.after(dtaxa2) && dano.before(dtaxa3)) {
+                    rwTaxamulta30.setVisible(true);
+                    lbtaxaMulta30dias.setValue(pal.getPercentagemMultaInscricao30dias() + "");
+                    total = total * (pal.getPercentagemMultaInscricao30dias() / 100);
+                }
             }
         } else {
             dtaxa1 = pal.getDataFimE1();
@@ -1013,8 +1084,7 @@ public class PedidoInscricaoController extends GenericForwardComposer {
 //            csimpm.updates(e);
 //        }
 //    }
-    
-     public void calcularNiveFreq(Estudante e) {
+    public void calcularNiveFreq(Estudante e) {
         par.clear();
         // int anoi = (e.getAnoIngresso() + e.getNivelFrequencia()) - 1;
         int nactual = e.getNivelFrequencia();
@@ -1046,7 +1116,7 @@ public class PedidoInscricaoController extends GenericForwardComposer {
                 + " and id.estado is true and ((id.notaFinal is not null and id.notaFinal >= 10) or (id.notaFinal is null and extract(year from id.inscricao.dataInscricao) < :ano)))", par).size();
         //  if (sem == 1) {
         //   if (((co1 - c1) <= 2) && ((co2 - c2) <= 2)) {// so no primeiro semestre
-   //       Messagebox.show(co1+" - "+c1+"+) + ("+co2+" - "+c2);
+        //       Messagebox.show(co1+" - "+c1+"+) + ("+co2+" - "+c2);
         int t1 = 0, t2 = 0;
         if (co1 >= c1) {
             t1 = co1 - c1;
@@ -1058,8 +1128,8 @@ public class PedidoInscricaoController extends GenericForwardComposer {
             nactual = nactual + 1;
             int nc = nactual;//e.getNivelFrequencia();
             int nc2 = nc;
-             c1 = 0;
-             c2 = 0;
+            c1 = 0;
+            c2 = 0;
             par.clear();
             par.put("curso", e.getCursocurrente());
             par.put("nivel", nc);
@@ -1082,13 +1152,13 @@ public class PedidoInscricaoController extends GenericForwardComposer {
             c2 = csimpm.findByJPQuery("from Inscricaodisciplina id where id.inscricao.idEstudante = :e and "
                     + "id.disciplina.nivel = :anoi and id.disciplina.planoc = :planoc and id.disciplina.semestre = 2 and (id.disciplinaActiva = 3"
                     + " and id.estado is true and extract(year from id.inscricao.dataInscricao) = :ano)", par).size();//  and ((id.notaFinal is not null and id.notaFinal >= 10))or id.notaFinal is null
-          //  Messagebox.show("1");
-             if (c1 != 0 || c2 != 0) {
-                  //  nc2 = nc2 + 1;
-                 e.setNivelFrequencia(nc2);
-               //   Messagebox.show("2");
+            //  Messagebox.show("1");
+            if (c1 != 0 || c2 != 0) {
+                //  nc2 = nc2 + 1;
+                e.setNivelFrequencia(nc2);
+                //   Messagebox.show("2");
                 csimpm.updates(e);
-                }
+            }
 //            if (nc2 > nc) {
 //                
 //            }

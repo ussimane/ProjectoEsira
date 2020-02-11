@@ -45,6 +45,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -174,19 +175,19 @@ public class VisitanteController extends GenericForwardComposer {
         par.clear();
         par.put("nome", "%" + txNome.getValue().toLowerCase() + "%");
         par.put("curso", (Curso) cbCurso.getSelectedItem().getValue());
-        par.put("nrbi", txBI.getValue());
-        par.put("contacto", txCont.getValue());
-        Listaadmissao la = csimpm.findEntByJPQuery("from Listaadmissao l where lower(l.nome) like :nome and"
-                + " l.nrBI like :nrbi and l.curso = :curso and l.telefone = :contacto", par);
+        //  par.put("nrbi", txBI.getValue());
+       // par.put("contacto", txCont.getValue());
+        Listaadmissao la = csimpm.findEntByJPQuery("from Listaadmissao l where lower(unaccent(l.nome)) like unaccent(:nome) and"
+                + " l.curso = :curso", par);// and l.telefone = :contacto l.nrBI like :nrbi and
         if (la == null) {
             //Clients.showNotification("Candidato Econtrado com sucesso", null, null, null, 2000);
             par.clear();
-            par.put("nome", txNome.getValue());
+            par.put("nome", "%" + txNome.getValue().toLowerCase() + "%");
             par.put("curso", (Curso) cbCurso.getSelectedItem().getValue());
-            par.put("nrbi", txBI.getValue());
-            par.put("contacto", txCont.getValue());
-            Estudante e = csimpm.findEntByJPQuery("from Estudante e where e.endereco.telefone = :contacto and"
-                    + " e.documento.nrDocumento = :nrbi and e.apelido like :nome and e.cursocurrente = :curso", par);
+            //  par.put("nrbi", txBI.getValue());
+           // par.put("contacto", txCont.getValue());
+            Estudante e = csimpm.findEntByJPQuery("from Estudante e where"
+                    + " lower(unaccent(e.nomeCompleto)) like unaccent(:nome) and e.cursocurrente = :curso", par);// e.endereco.telefone = :contacto and  e.documento.nrDocumento = :nrbi and
             if (e != null) {
                 verificarMatricula(e);
                 eq = EventQueues.lookup("mat" + e.getIdEstudante(), EventQueues.APPLICATION, true);
@@ -328,6 +329,7 @@ public class VisitanteController extends GenericForwardComposer {
     public void onBtnMatric() throws Exception {
         Date dano = new Date();
         Matricula mat = null;
+        Curso c=null;
         if (vb4.isVisible()) {
             // Messagebox.show("dsfd");
             MatriculaPK mpk = new MatriculaPK(((Intbox) win.getFellow("ibidEstudante")).getValue().longValue(),
@@ -336,9 +338,11 @@ public class VisitanteController extends GenericForwardComposer {
             par.put("ide", mpk);
             mat = (Matricula) csimpm.findByJPQuery("from Matricula m where m.matriculaPK=:ide", par).get(0);
             dano = mat.getDataMatricula();
+             c = mat.getCurso();
         } else {
             Listaadmissao la = csimpm.get(Listaadmissao.class, idl.getValue());
             la = csimpm.get(Listaadmissao.class, la.getIdaluno());
+            c=la.getCurso();
             if (la.getIdEstudante() != null) {
                 Estudante e = la.getIdEstudante();
                 if (e.getMatriculaList().size() == 1) {
@@ -348,10 +352,11 @@ public class VisitanteController extends GenericForwardComposer {
                 }
             } else {
                 par.clear();
-                par.put("nome", la.getNome());
-                par.put("nrbi", la.getNrBI());
+                par.put("nome","%" + la.getNome().toLowerCase() + "%");
+                // par.put("nrbi", la.getNrBI());
+             //   par.put("contacto", la.getTelefone());
                 Estudante e = csimpm.findEntByJPQuery("from Estudante e where"
-                        + " e.documento.nrDocumento = :nrbi and e.apelido like :nome", par);
+                        + " lower(unaccent(e.nomeCompleto)) like unaccent(:nome) and e.estado is true", par);//e.endereco.telefone = :contacto and  e.documento.nrDocumento = :nrbi and
                 if (e != null) {
                     if (e.getCursocurrente().getIdCurso() != la.getCurso().getIdCurso()
                             && (e.getCursocurrente().getIdCurso() != e.getCursoingresso().getIdCurso())) {
@@ -370,7 +375,15 @@ public class VisitanteController extends GenericForwardComposer {
         }
         Calendar cal = new GregorianCalendar();
         cal.setTime(dano);
-        PlanificacaoAnoLectivo planificacaoAnoLectivo = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo", null);
+        c = csimpm.get(Curso.class, c.getIdCurso());
+        par.clear();
+        par.put("fac", c.getFaculdade());
+        String fn = c.getFaculdade().getDesricao();
+        PlanificacaoAnoLectivo planificacaoAnoLectivo = csimpm.findEntByJPQuery("from PlanificacaoAnoLectivo p where p.faculdade = :fac", par);
+        if(planificacaoAnoLectivo==null){
+            Clients.showNotification("Não foi encontrado um plano de matriculas para "+fn, "error", null, null, 3000);
+            return;
+        }
         if (dano.before(planificacaoAnoLectivo.getDatainicioInscricao())) {
             Clients.showNotification("Por favor aguarde o periodo de Matriculas", "warning", null, null, 0, true);
             return;
@@ -402,62 +415,57 @@ public class VisitanteController extends GenericForwardComposer {
                 tbnome.setReadonly(true);
                 novaMatricula(win, todo);
             }
-        } else if ((dano.after(planificacaoAnoLectivo.getDataFimIE1()) && dano.before(planificacaoAnoLectivo.getDataFimIE2())) || (mat != null && mat.getPeriodo() != null && mat.getPeriodo().equals("M15"))) {
-//                //if (dano.after(planificacaoAnoLectivo.getDataFimIE1())
-//                        && dano.before(planificacaoAnoLectivo.getDataFimIE2())) {
-//                    Calendar c = Calendar.getInstance();
-//                    c.setTime(planificacaoAnoLectivo.getDataFimIE1());
-//                    c.add(Calendar.DAY_OF_MONTH, 15);
-//                    if (c.getTime().after(dano)) {
-            Listaadmissao todo = null;
-            final HashMap<String, Object> map = new HashMap<String, Object>();
-            map.put("periodo", "M15");
-            win.setParent(visitante);
-            win.doModal();
-            Textbox tbnome = (Textbox) win.getFellow("tbnomeCompleto");
-             Textbox tbnrmeca = (Textbox) win.getFellow("nrmeca");
-            ((Label) win.getFellow("taxamultas")).setValue("M15");
-            ((Label) win.getFellow("lbtaxaMatricula")).setValue(planificacaoAnoLectivo.getTaxaMatriculaNacional().toString());
-            ((Label) win.getFellow("lbtaxaMatriculaE")).setValue(planificacaoAnoLectivo.getTaxaMatriculaEstrangeiro().toString());
-            ((Row) win.getFellow("rwTaxamulta15")).setVisible(true);
-            ((Row) win.getFellow("rwTaxamulta30")).setVisible(false);
-            ((Row) win.getFellow("prazomat")).setVisible(false);
-            if (vb4.isVisible()) {
-                renovar(mat, win);
-            } else {
-                todo = csimpm.get(Listaadmissao.class, idl.getValue());
-                tbnome.setValue(todo.getNome());
-                tbnrmeca.setValue(todo.getNumero());
-                tbnome.setReadonly(true);
-                novaMatricula(win, todo);
-            }
-        } else if ((dano.after(planificacaoAnoLectivo.getDataFimIE2()) && dano.before(planificacaoAnoLectivo.getDma1())) || (mat != null && mat.getPeriodo() != null && mat.getPeriodo().equals("M30"))) {
-//                                Messagebox.show("Periodo de Multa 30 dias = " + planificacaoAnoLectivo.getPercentagemMultaMatricula30dias());
-            Listaadmissao todo = null;
-            final HashMap<String, Object> map = new HashMap<String, Object>();
-            map.put("periodo", "M30");
-            win.setParent(visitante);
-            win.doModal();
-            Textbox tbnome = (Textbox) win.getFellow("tbnomeCompleto");
-            Textbox tbnrmeca = (Textbox) win.getFellow("nrmeca");
-            ((Label) win.getFellow("taxamultas")).setValue("M30");
-            ((Label) win.getFellow("lbtaxaMatricula")).setValue(planificacaoAnoLectivo.getTaxaMatriculaNacional().toString());
-            ((Label) win.getFellow("lbtaxaMatriculaE")).setValue(planificacaoAnoLectivo.getTaxaMatriculaEstrangeiro().toString());
-            //    ((Label) win.getFellow("lbtaxaMuniversidade")).setValue(planificacaoAnoLectivo.getTaxaDeMudancaoTurno().toString());
-            ((Row) win.getFellow("rwTaxamulta30")).setVisible(true);
-            ((Row) win.getFellow("rwTaxamulta15")).setVisible(false);
-            ((Div) win.getFellow("prazo")).setVisible(false);
-            ((Row) win.getFellow("rwmulta")).setVisible(false);
-            ((Row) win.getFellow("prazomat")).setVisible(false);
-            if (vb4.isVisible()) {
-                renovar(mat, win);
-            } else {
-                todo = csimpm.get(Listaadmissao.class, idl.getValue());
-                tbnome.setValue(todo.getNome());
-                tbnrmeca.setValue(todo.getNumero());
-                tbnome.setReadonly(true);
-                novaMatricula(win, todo);
-            }
+//        } else if ((dano.after(planificacaoAnoLectivo.getDataFimIE1()) && dano.before(planificacaoAnoLectivo.getDataFimIE2())) || (mat != null && mat.getPeriodo() != null && mat.getPeriodo().equals("M15"))) {
+//
+//            Listaadmissao todo = null;
+//            final HashMap<String, Object> map = new HashMap<String, Object>();
+//            map.put("periodo", "M15");
+//            win.setParent(visitante);
+//            win.doModal();
+//            Textbox tbnome = (Textbox) win.getFellow("tbnomeCompleto");
+//            Textbox tbnrmeca = (Textbox) win.getFellow("nrmeca");
+//            ((Label) win.getFellow("taxamultas")).setValue("M15");
+//            ((Label) win.getFellow("lbtaxaMatricula")).setValue(planificacaoAnoLectivo.getTaxaMatriculaNacional().toString());
+//            ((Label) win.getFellow("lbtaxaMatriculaE")).setValue(planificacaoAnoLectivo.getTaxaMatriculaEstrangeiro().toString());
+//            ((Row) win.getFellow("rwTaxamulta15")).setVisible(true);
+//            ((Row) win.getFellow("rwTaxamulta30")).setVisible(false);
+//            ((Row) win.getFellow("prazomat")).setVisible(false);
+//            if (vb4.isVisible()) {
+//                renovar(mat, win);
+//            } else {
+//                todo = csimpm.get(Listaadmissao.class, idl.getValue());
+//                tbnome.setValue(todo.getNome());
+//                tbnrmeca.setValue(todo.getNumero());
+//                tbnome.setReadonly(true);
+//                novaMatricula(win, todo);
+//            }
+//        } else if ((dano.after(planificacaoAnoLectivo.getDataFimIE2()) && dano.before(planificacaoAnoLectivo.getDma1())) || (mat != null && mat.getPeriodo() != null && mat.getPeriodo().equals("M30"))) {
+////                                Messagebox.show("Periodo de Multa 30 dias = " + planificacaoAnoLectivo.getPercentagemMultaMatricula30dias());
+//            Listaadmissao todo = null;
+//            final HashMap<String, Object> map = new HashMap<String, Object>();
+//            map.put("periodo", "M30");
+//            win.setParent(visitante);
+//            win.doModal();
+//            Textbox tbnome = (Textbox) win.getFellow("tbnomeCompleto");
+//            Textbox tbnrmeca = (Textbox) win.getFellow("nrmeca");
+//            ((Label) win.getFellow("taxamultas")).setValue("M30");
+//            ((Label) win.getFellow("lbtaxaMatricula")).setValue(planificacaoAnoLectivo.getTaxaMatriculaNacional().toString());
+//            ((Label) win.getFellow("lbtaxaMatriculaE")).setValue(planificacaoAnoLectivo.getTaxaMatriculaEstrangeiro().toString());
+//            //    ((Label) win.getFellow("lbtaxaMuniversidade")).setValue(planificacaoAnoLectivo.getTaxaDeMudancaoTurno().toString());
+//            ((Row) win.getFellow("rwTaxamulta30")).setVisible(true);
+//            ((Row) win.getFellow("rwTaxamulta15")).setVisible(false);
+//            ((Div) win.getFellow("prazo")).setVisible(false);
+//            ((Row) win.getFellow("rwmulta")).setVisible(false);
+//            ((Row) win.getFellow("prazomat")).setVisible(false);
+//            if (vb4.isVisible()) {
+//                renovar(mat, win);
+//            } else {
+//                todo = csimpm.get(Listaadmissao.class, idl.getValue());
+//                tbnome.setValue(todo.getNome());
+//                tbnrmeca.setValue(todo.getNumero());
+//                tbnome.setReadonly(true);
+//                novaMatricula(win, todo);
+//            }
         } else {
             Clients.showNotification("Periodo de Matricula encerrado."
                     + "Contacte a direção da Faculdade que pretende ingressar", "warning", null, null, 0, true);
@@ -469,6 +477,7 @@ public class VisitanteController extends GenericForwardComposer {
         ((Intbox) win.getFellow("idl")).setValue(idl.getValue());
         ((Intbox) win.getFellow("ibplanoc")).setValue(t.getCurso().getPlanoc());
         ((Intbox) win.getFellow("ibturno")).setValue(t.getTurno());
+        ((Intbox) win.getFellow("ibano")).setValue(t.getAno());
         Combobox cbcur = (Combobox) win.getFellow("cbcursocurrente");
         if (mudarcurso) {
             Curso ca = csimpm.get(Curso.class, idcursoant);
@@ -476,7 +485,7 @@ public class VisitanteController extends GenericForwardComposer {
             Comboitem cit;
             while (items.hasNext()) {
                 cit = items.next();
-                if (((Curso) cit.getValue()).getIdCurso() == ca.getIdCurso()) {
+                if (Objects.equals(((Curso) cit.getValue()).getIdCurso(), ca.getIdCurso())) {
                     cbcur.setSelectedItem(cit);
                     break;
                 }
@@ -492,7 +501,7 @@ public class VisitanteController extends GenericForwardComposer {
             Comboitem cit2;
             while (items2.hasNext()) {
                 cit2 = items2.next();
-                if (((Curso) cit2.getValue()).getIdCurso() == t.getCurso().getIdCurso()) {
+                if (Objects.equals(((Curso) cit2.getValue()).getIdCurso(), t.getCurso().getIdCurso())) {
                     cbcur2.setSelectedItem(cit2);
                     break;
                 }
@@ -504,13 +513,19 @@ public class VisitanteController extends GenericForwardComposer {
             Comboitem cit;
             while (items.hasNext()) {
                 cit = items.next();
-                if (((Curso) cit.getValue()).getIdCurso() == t.getCurso().getIdCurso()) {
+                if (Objects.equals(((Curso) cit.getValue()).getIdCurso(), t.getCurso().getIdCurso())) {
                     cbcur.setSelectedItem(cit);
                     break;
                 }
             }
             cbcur.setReadonly(true);
             cbcur.setButtonVisible(false);
+        }
+        ((Combobox) win.getFellow("cbTurno")).setButtonVisible(false);
+        if (t.getTurno() == 1) {
+            ((Combobox) win.getFellow("cbTurno")).setSelectedIndex(0);
+        } else {
+            ((Combobox) win.getFellow("cbTurno")).setSelectedIndex(1);
         }
         ((Row) win.getFellow("rwnrm")).setVisible(false);
         ((Button) win.getFellow("btnsave")).setLabel("Enviar");
@@ -527,18 +542,18 @@ public class VisitanteController extends GenericForwardComposer {
         Constraint c = null;
         txNome.setConstraint(c);
         cbCurso.setConstraint(c);
-        txBI.setConstraint(c);
-        txCont.setConstraint(c);
+        //  txBI.setConstraint(c);
+        //txCont.setConstraint(c);
         txNome.setValue(null);
-        txBI.setValue(null);
-        txCont.setValue(null);
+        // txBI.setValue(null);
+        //txCont.setValue(null);
     }
 
     private void addListApConstraint() {
         txNome.setConstraint(" no Empty: Insira o nome!");
         cbCurso.setConstraint(" no Empty: Seleccione o curso!");
-        txBI.setConstraint(" no Empty: Insira o nr do BI/Doc.!");
-        txCont.setConstraint(" no Empty: Insira o numero de contacto!");
+        // txBI.setConstraint(" no Empty: Insira o nr do BI/Doc.!");
+       // txCont.setConstraint(" no Empty: Insira o numero de contacto!");
     }
 
     //Pesquisar estudante
@@ -676,12 +691,12 @@ public class VisitanteController extends GenericForwardComposer {
         Long cursocurrente = estudante.getCursocurrente().getIdCurso();
         Long cursoingresso = estudante.getCursoingresso().getIdCurso();
         Combobox cbcur = (Combobox) win.getFellow("cbcursocurrente");
-        if (cursocurrente != cursoingresso) {
+        if (!Objects.equals(cursocurrente, cursoingresso)) {
             final Iterator<Comboitem> items = new ArrayList(cbcur.getItems()).listIterator();
             Comboitem cit;
             while (items.hasNext()) {
                 cit = items.next();
-                if (((Curso) cit.getValue()).getIdCurso() == estudante.getCursoingresso().getIdCurso()) {
+                if (Objects.equals(((Curso) cit.getValue()).getIdCurso(), estudante.getCursoingresso().getIdCurso())) {
                     cbcur.setSelectedItem(cit);
                     break;
                 }
@@ -697,7 +712,7 @@ public class VisitanteController extends GenericForwardComposer {
             Comboitem cit2;
             while (items2.hasNext()) {
                 cit2 = items2.next();
-                if (((Curso) cit2.getValue()).getIdCurso() == estudante.getCursocurrente().getIdCurso()) {
+                if (Objects.equals(((Curso) cit2.getValue()).getIdCurso(), estudante.getCursocurrente().getIdCurso())) {
                     cbcur2.setSelectedItem(cit2);
                     break;
                 }
@@ -709,7 +724,7 @@ public class VisitanteController extends GenericForwardComposer {
             Comboitem cit;
             while (items.hasNext()) {
                 cit = items.next();
-                if (((Curso) cit.getValue()).getIdCurso() == estudante.getCursocurrente().getIdCurso()) {
+                if (Objects.equals(((Curso) cit.getValue()).getIdCurso(), estudante.getCursocurrente().getIdCurso())) {
                     cbcur.setSelectedItem(cit);
                     break;
                 }
@@ -719,6 +734,7 @@ public class VisitanteController extends GenericForwardComposer {
         }
         int estadoCivil = estudante.getEstadoCivil().getIdEstado();
         int escolaPais = estudante.getEscolaPais().getIdPais();
+        Provincia escolaprov = estudante.getEscolaprovincia();
         int nacionalidade = estudante.getNacionalidade().getIdPais();
         int viaIngresso = estudante.getViaIngresso().getIdViaIngresso();
         Endereco endereco = estudante.getEndereco();
@@ -734,11 +750,17 @@ public class VisitanteController extends GenericForwardComposer {
         ((Intbox) win.getFellow("ibano")).setValue(mat.getMatriculaPK().getAno());
         ((Textbox) win.getFellow("tbnomeCompleto")).setValue(estudante.getNomeCompleto());
         ((Textbox) win.getFellow("tbapelido")).setValue(estudante.getApelido());
+        ((Combobox) win.getFellow("cbTurno")).setButtonVisible(false);
+        if (estudante.getTurno() == 1) {
+            ((Combobox) win.getFellow("cbTurno")).setSelectedIndex(0);
+        } else {
+            ((Combobox) win.getFellow("cbTurno")).setSelectedIndex(1);
+        }
         final Iterator<Comboitem> itemscursocurrente = new ArrayList(((Combobox) win.getFellow("cbcursocurrente")).getItems()).listIterator();
         Comboitem citcursocurrente;
         while (itemscursocurrente.hasNext()) {
             citcursocurrente = itemscursocurrente.next();
-            if (((Curso) citcursocurrente.getValue()).getIdCurso() == cursocurrente) {
+            if (Objects.equals(((Curso) citcursocurrente.getValue()).getIdCurso(), cursocurrente)) {
                 ((Combobox) win.getFellow("cbcursocurrente")).setSelectedItem(citcursocurrente);
                 break;
             }
@@ -803,7 +825,7 @@ public class VisitanteController extends GenericForwardComposer {
         Comboitem citprovincia;
         while (itemsprovincia.hasNext()) {
             citprovincia = itemsprovincia.next();
-            if (((Provincia) citprovincia.getValue()).getIdProvincia() == endereco.getProvincia().getIdProvincia()) {
+            if (Objects.equals(((Provincia) citprovincia.getValue()).getIdProvincia(), endereco.getProvincia().getIdProvincia())) {
                 ((Combobox) win.getFellow("cbprovinciaEndAL")).setSelectedItem(citprovincia);
                 break;
             }
@@ -816,7 +838,7 @@ public class VisitanteController extends GenericForwardComposer {
         Comboitem citprovincia2 = null;
         while (itemsprovincia2.hasNext()) {
             citprovincia2 = itemsprovincia2.next();
-            if (((Provincia) citprovincia2.getValue()).getIdProvincia() == enderecof.getProvincia().getIdProvincia()) {
+            if (Objects.equals(((Provincia) citprovincia2.getValue()).getIdProvincia(), enderecof.getProvincia().getIdProvincia())) {
                 ((Combobox) win.getFellow("cbprovinciaEndPF")).setSelectedItem(citprovincia2);
                 break;
             }
@@ -830,6 +852,18 @@ public class VisitanteController extends GenericForwardComposer {
             if (((Pais) citescolaPais.getValue()).getIdPais() == escolaPais) {
                 ((Combobox) win.getFellow("cbescolaPais")).setSelectedItem(citescolaPais);
                 break;
+            }
+        }
+        if (escolaprov != null) {
+            Long escolaprovincia = escolaprov.getIdProvincia();
+            final Iterator<Comboitem> itemsescolaProv = new ArrayList(((Combobox) win.getFellow("cbescolaProvincia")).getItems()).listIterator();
+            Comboitem citescolaProv;
+            while (itemsescolaProv.hasNext()) {
+                citescolaProv = itemsescolaProv.next();
+                if (Objects.equals(((Provincia) citescolaProv.getValue()).getIdProvincia(), escolaprovincia)) {
+                    ((Combobox) win.getFellow("cbescolaProvincia")).setSelectedItem(citescolaProv);
+                    break;
+                }
             }
         }
 
@@ -869,7 +903,7 @@ public class VisitanteController extends GenericForwardComposer {
             Comboitem citprovinciaAdmissao;
             while (itemsprovinciaAdmissao.hasNext()) {
                 citprovinciaAdmissao = itemsprovinciaAdmissao.next();
-                if (((Provincia) citprovinciaAdmissao.getValue()).getIdProvincia() == iex.getProvinciaAdmissao().getIdProvincia()) {
+                if (Objects.equals(((Provincia) citprovinciaAdmissao.getValue()).getIdProvincia(), iex.getProvinciaAdmissao().getIdProvincia())) {
                     ((Combobox) win.getFellow("cbprovinciaAdmissao")).setSelectedItem(citprovinciaAdmissao);
                     break;
                 }
@@ -890,7 +924,7 @@ public class VisitanteController extends GenericForwardComposer {
             Comboitem citpaisUniversidade;
             while (itemspaisUniversidade.hasNext()) {
                 citpaisUniversidade = itemspaisUniversidade.next();
-                if (((Pais) citpaisUniversidade.getValue()).getIdPais() == imu.getPaisUniversidade().getIdPais()) {
+                if (Objects.equals(((Pais) citpaisUniversidade.getValue()).getIdPais(), imu.getPaisUniversidade().getIdPais())) {
                     ((Combobox) win.getFellow("cbpaisUniversidade")).setSelectedItem(citpaisUniversidade);
                     break;
                 }
@@ -912,7 +946,7 @@ public class VisitanteController extends GenericForwardComposer {
         Comboitem citbolsa;
         while (itemsbolsa.hasNext()) {
             citbolsa = itemsbolsa.next();
-            if (((Bolsa) citbolsa.getValue()).getIdBolsa() == bolsa) {
+            if (Objects.equals(((Bolsa) citbolsa.getValue()).getIdBolsa(), bolsa)) {
                 ((Combobox) win.getFellow("cbbolsa")).setSelectedItem(citbolsa);
                 break;
             }
@@ -970,7 +1004,7 @@ public class VisitanteController extends GenericForwardComposer {
         Comboitem cittipo;
         while (itemstipo.hasNext()) {
             cittipo = itemstipo.next();
-            if (((Tipodocumento) cittipo.getValue()).getIdTipo() == doc.getTipo().getIdTipo()) {
+            if (Objects.equals(((Tipodocumento) cittipo.getValue()).getIdTipo(), doc.getTipo().getIdTipo())) {
                 ((Combobox) win.getFellow("cbtipo")).setSelectedItem(cittipo);
                 break;
             }
@@ -1012,11 +1046,30 @@ public class VisitanteController extends GenericForwardComposer {
         }
         ((Listbox) win.getFellow("lbimg1")).setModel(new ListModelList(lm2));
         //recibos
-        par.clear();
+//        par.clear();
+//        par.put("mat", mat);
+//        List<Arquivomatricula> lam3 = csimpm.findByJPQuery("from Arquivomatricula am where"
+//                + " am.matricula = :mat", par);
+//        List<Arquivo> lm3 = new ArrayList<Arquivo>();
+//        for (Arquivomatricula am3 : lam3) {
+//            String sss = UserAutentic.getPathR("3") + estudante.getNrEstudante() + mat.getMatriculaPK().getAno() + am3.getNomearquivo();
+//            //File f = new File(ss);
+//            InputStream iss = new FileInputStream(sss);
+//            Media pp = new AMedia(sss, FilenameUtils.getExtension(sss), URLConnection.guessContentTypeFromName(sss), iss);
+//            Media mm = new AMedia(am3.getNomearquivo(), FilenameUtils.getExtension(sss), URLConnection.guessContentTypeFromName(sss), pp.getByteData());
+//            //Image ii = new AImage(sss);
+//            //((org.zkoss.zul.Image) win.getFellow("picss").getChildren().get(0)).setContent(i);
+//            ((Textbox) win.getFellow("tbimg4")).setValue(mm.getName());
+//            lm3.add(new Arquivo(am3.getNrtalao(), mm, am3.getNomearquivo()));
+//        }
+//        ((Listbox) win.getFellow("lbimg")).setModel(new ListModelList(lm3));
+         par.clear();
         par.put("mat", mat);
         List<Arquivomatricula> lam3 = csimpm.findByJPQuery("from Arquivomatricula am where"
                 + " am.matricula = :mat", par);
         List<Arquivo> lm3 = new ArrayList<Arquivo>();
+        List<Arquivo> lm4 = new ArrayList<Arquivo>();
+        String recibousado = "";
         for (Arquivomatricula am3 : lam3) {
             String sss = UserAutentic.getPathR("3") + estudante.getNrEstudante() + mat.getMatriculaPK().getAno() + am3.getNomearquivo();
             //File f = new File(ss);
@@ -1026,46 +1079,67 @@ public class VisitanteController extends GenericForwardComposer {
             //Image ii = new AImage(sss);
             //((org.zkoss.zul.Image) win.getFellow("picss").getChildren().get(0)).setContent(i);
             ((Textbox) win.getFellow("tbimg4")).setValue(mm.getName());
-            lm3.add(new Arquivo(am3.getNrtalao(), mm, am3.getNomearquivo()));
+            if (am3.getRecibousado() != null && am3.getRecibousado() == true) {
+                par.clear();
+                par.put("nrt", am3.getNrtalao());
+                List<Arquivomatricula> lamat = csimpm.findByJPQuery("from Arquivomatricula a where a.nrtalao like :nrt", par);
+                String rs = "Recibo Nr.: " + am3.getNrtalao() + " foi usado por:", rs2 = "";
+                for (Arquivomatricula ama : lamat) {
+                    rs2 = rs2 + "\nEstudante: " + ama.getEstudante() + "\n"
+                            + "Taxa Matricula: " + ama.getValorcobrado() + " Data Matricula: " + ama.getDatamat();
+                }
+                recibousado = recibousado + "\n" + rs + "\n" + rs2;
+            }
+            if (!am3.getNrtalao().equals("0")) {
+                lm3.add(new Arquivo(am3.getNrtalao(), mm, am3.getNomearquivo(), am3.getBanco(), am3.getValor(), am3.getEstudante(), am3.getDatadeposito()));
+            } else {
+                lm4.add(new Arquivo(am3.getNrtalao(), mm, am3.getNomearquivo(), am3.getBanco(), am3.getValor(), am3.getEstudante(), am3.getDatadeposito()));
+            }
+        }
+        if (!recibousado.equals("")) {
+            ((Row) win.getFellow("rwRU")).setVisible(true);
+            ((Textbox) win.getFellow("txRU")).setText(recibousado);
         }
         ((Listbox) win.getFellow("lbimg")).setModel(new ListModelList(lm3));
+        ((Listbox) win.getFellow("lbimgII")).setModel(new ListModelList(lm4));
+//        }
     }
 
     @Autowired
-@Qualifier("authenticationManager")
-protected AuthenticationManager authenticationProvider;
-    
+    @Qualifier("authenticationManager")
+    protected AuthenticationManager authenticationProvider;
+
     public void onSelectCurso() {
-     //   Messagebox.show("sdfsdf1");
+        //   Messagebox.show("sdfsdf1");
         if (cbCurso.getSelectedItem() != null) {
-     //       Messagebox.show("sdfsdf2");
+            //       Messagebox.show("sdfsdf2");
             Curso c = (Curso) cbCurso.getSelectedItem().getValue();
             c = csimpm.get(Curso.class, c.getIdCurso());
             String t = "fecn1";
             System.out.println("Fac: " + c.getFaculdade().getTenant() + " " + TenantIdResolver.getTenant());
-             if (SecurityContextHolder.getContext() != null && SecurityContextHolder.getContext().getAuthentication() != null
+            if (SecurityContextHolder.getContext() != null && SecurityContextHolder.getContext().getAuthentication() != null
                     && SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof Utilizador) {
-               Utilizador usr = (Utilizador) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+                Utilizador usr = (Utilizador) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
                 if (usr != null) {
                     //  System.out.println("utiliza o esquema de utilizador"+usr.getEsquema());
                     t = usr.getEsquema();
-                //    Messagebox.show("t=="+usr.getEsquema());
+                    //    Messagebox.show("t=="+usr.getEsquema());
                 }
-            } 
-          //   Messagebox.show(c.getFaculdade().getTenant());
-            if (!c.getFaculdade().getTenant().equals(t)){//TenantIdResolver.getTenant())) {
+            }
+            //   Messagebox.show(c.getFaculdade().getTenant());
+            if (!c.getFaculdade().getTenant().equals(t)) {//TenantIdResolver.getTenant())) {
 //                TenantIdResolver.setTenant(c.getFaculdade().getTenant());
                 Session sess = Sessions.getCurrent();
                 sess.setAttribute("tenant", c.getFaculdade().getTenant());
                 String ten = c.getFaculdade().getTenant();
                 ;
-                 List<GrantedAuthority> authList = new ArrayList<GrantedAuthority>();
+                List<GrantedAuthority> authList = new ArrayList<GrantedAuthority>();
                 authList.add(new GrantedAuthorityImpl("IS_AUTHENTICATED_ANONYMOUSLY"));
                 UserDetails user = new Utilizador(sess.toString(), sess.toString(), authList, c.getFaculdade().getTenant());
-                UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(user, null,authList);
-            token.setAuthenticated(false);
+                UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(user, null, authList);
+                token.setAuthenticated(false);
                // Authentication a=this.authenticationProvider.authenticate(token.);
-SecurityContextHolder.getContext().setAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(token);
 //                SecurityContext s = SecurityContextHolder.getContext();
 //                List<GrantedAuthority> authList = new ArrayList<GrantedAuthority>();
 //                authList.add(new GrantedAuthorityImpl("IS_AUTHENTICATED_ANONYMOUSLY"));
@@ -1080,6 +1154,4 @@ SecurityContextHolder.getContext().setAuthentication(token);
         }
     }
 
-    
-    
 }

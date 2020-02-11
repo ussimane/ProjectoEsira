@@ -161,7 +161,16 @@ Copyright (C) 2006 Potix Corporation. All Rights Reserved.
                                 <column hflex="1" vflex="1" />
                             </columns> 
                             <rows>
-                                     
+                                 <row>
+                                        <hlayout vflex="1" hflex="1" sclass="second-layout">
+                                            <div sclass="description-area" height="100%">
+                                                <label value="Histórico de prescrições:" />
+                                            </div>
+                                            <div sclass="description-area" height="100%">
+                                                <label id="lbprescricao" value="" width="98%" style="color:red;"/>
+                                            </div>
+                                        </hlayout>
+                                    </row>     
                                 <row id="rwTaxanM" visible="false">
                                     <hlayout vflex="1" hflex="1" sclass="second-layout">
                                         <div sclass="description-area" height="100%">
@@ -266,7 +275,8 @@ Copyright (C) 2006 Potix Corporation. All Rights Reserved.
                                                 </button> 
                                             </div>
                                             <div sclass="description-area" style="background-image:url('../images/profilev.png');border:1px solid #ddd;">
-                                                <textbox style="border:none;background: transparent;position: absolute" width="0px" height="0px" id="tbimg4" constraint="no Empty: Por favor anexar Comprovativo de Pagamento!"/>
+                                                <textbox style="border:none;background: transparent;position: absolute" width="0px" height="0px" id="tbimg4"/>
+                                                <!--constraint="no Empty: Por favor anexar Comprovativo de Pagamento!"/>-->
                                                 <listbox span="true"  sizedByContent="true" style="overflow:auto" height="100%" id="lbimg" >
                                                     <listhead  sizable="true">
                                                         <listheader label="Numero de recibo" align="left"/>

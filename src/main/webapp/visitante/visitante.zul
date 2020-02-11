@@ -83,30 +83,31 @@
                                     <row>
                                         <hlayout vflex="1" hflex="1" sclass="second-layout">
                                             <div sclass="description-area" height="100%">
-                                                <label value="Apelido" style="margin-right:20px"/>
+                                                <label value="Nome" style="margin-right:20px"/>
                                             </div>
                                             <div sclass="description-area" height="100%"> 
-                                                <textbox id="txNome" width="250px" constraint=" no Empty: Insira o Apelido!"/>
+                                                <textbox id="txNome" width="250px" constraint=" no Empty: Insira o Nome!"/>
                                             </div>
                                         </hlayout>
                                     </row>
-                                    <row>
+                                    <row visible="false">
                                         <hlayout vflex="1" hflex="1" sclass="second-layout">
                                             <div sclass="description-area" height="100%">
                                                 <label value="Numero de BI/Passaporte" style="margin-right:20px" />
                                             </div>
                                             <div sclass="description-area" height="100%"> 
-                                                <textbox id="txBI" width="250px" constraint=" no Empty: Insira o nr do BI/Doc.!"/>
+                                                <textbox id="txBI" width="250px"/>
+                                                <!--constraint=" no Empty: Insira o nr do BI/Doc.!"-->
                                             </div>
                                         </hlayout>
                                     </row>
-                                    <row>
+                                    <row visible="false">
                                         <hlayout vflex="1" hflex="1" sclass="second-layout">
                                             <div sclass="description-area" height="100%">
                                                 <label value="Contacto" style="margin-right:20px" /> 
                                             </div>
                                             <div sclass="description-area" height="100%"> 
-                                                <textbox id="txCont" width="250px" constraint=" no Empty: Insira o numero de contacto!"/>
+                                                <textbox id="txCont" width="250px" />
                                             </div>
                                         </hlayout>
                                     </row>

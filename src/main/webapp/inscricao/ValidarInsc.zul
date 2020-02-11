@@ -146,10 +146,20 @@ Copyright (C) 2006 Potix Corporation. All Rights Reserved.
                                 <column hflex="1" vflex="1" />
                             </columns> 
                             <rows>
+                                 <row>
+                                        <hlayout vflex="1" hflex="1" sclass="second-layout">
+                                            <div sclass="description-area" height="100%">
+                                                <label value="Histórico de prescrições:" />
+                                            </div>
+                                            <div sclass="description-area" height="100%">
+                                                <label id="lbprescricao" value="" width="98%" style="color:red;"/>
+                                            </div>
+                                        </hlayout>
+                                    </row>
                                 <row id="rwTaxanM" visible="false">
                                     <hlayout vflex="1" hflex="1" sclass="second-layout">
                                         <div sclass="description-area" height="100%">
-                                            <label value="Taxa Normal de Matricula:" /> 
+                                            <label value="Taxa Normal de Inscriçáo:" /> 
                                         </div>
                                         <div sclass="description-area" height="100%">
                                             <label id="lbtaxaInscricao" value="" width="98%" style="color:red;"/>
@@ -159,7 +169,7 @@ Copyright (C) 2006 Potix Corporation. All Rights Reserved.
                                 <row id="rwTaxaeM" visible="false">
                                     <hlayout vflex="1" hflex="1" sclass="second-layout">
                                         <div sclass="description-area" height="100%">
-                                            <label value="Taxa de Matricula para Estudante Estrangeiro:" />
+                                            <label value="Taxa de Inscriçáo para Estudante Estrangeiro:" />
                                         </div>
                                         <div sclass="description-area" height="100%">
                                             <label id="lbtaxaInscricaoE" value="" width="98%" style="color:red;"/>
